@@ -82,7 +82,7 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding
     <div class="devs" id="devs"></div>
     <button id="refreshDevs">Geräte aktualisieren</button>
     <h2>Spieler</h2>
-    <p class="small">Im Spiel: Name antippen gibt +1 Punkt, das − zieht einen ab.</p>
+    <p class="small">Im Spiel: + gibt einen Punkt, − zieht einen ab (auch ins Minus).</p>
     <div id="pllist" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="pledit"><input id="newpl" placeholder="Name" autocomplete="off"><button id="addplBtn">Hinzufügen</button></div>
     <button id="resetScores">Punkte auf 0 setzen</button>
@@ -97,8 +97,7 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding
   <!-- Game -->
   <section id="game" hidden style="width:100%;display:flex;flex-direction:column;align-items:center;gap:20px">
     <div class="players" id="players"></div>
-    <p class="turninfo" id="turninfo" hidden></p>
-    <span class="count" id="count"></span>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px"><button class="icon" id="back" disabled aria-label="Einen Song zurück">← Zurück</button><span class="count" id="count"></span></div>
     <button class="disc" id="disc" aria-label="Abspielen oder Pause"><span class="label" id="lbl">?</span></button>
     <p class="hint" id="hint">Tippe auf die Platte</p>
     <div class="btns">
@@ -229,11 +228,18 @@ async function next(autoplay){
   if(pos>=deck.length-1){buildDeck();msg="Alle Songs durch, neu gemischt. Tippe auf die Platte"}
   const first=pos<0;
   pos++;cur=null;revealed=false;$("result").innerHTML="";$("reveal").disabled=false;
-  if(!first&&players.length){turn=(turn+1)%players.length;savePl()}
-  renderPlayers();
-  $("count").textContent=`Song ${pos+1} von ${deck.length}`;
+    renderPlayers();
+  $("count").textContent=`Song ${pos+1} von ${deck.length}`;$("back").disabled=pos<=0;
   started=false;resolve(deck[pos]).catch(()=>{});
   if(autoplay)playCurrent();else hint(msg);
+}
+async function back(){
+  if(pos<=0)return;
+  if(playing){const dev=LS.get("dev");try{await api("/me/player/pause"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT"})}catch(e){}}
+  playing=false;started=false;cur=null;revealed=false;$("disc").classList.remove("playing");
+  pos--;$("result").innerHTML="";$("reveal").disabled=false;
+  $("count").textContent=`Song ${pos+1} von ${deck.length}`;$("back").disabled=pos<=0;
+  hint("Vorheriger Song. Tippe auf die Platte zum Abspielen");
 }
 function reveal(){
   if(pos<0||revealed)return;revealed=true;const s=deck[pos];
@@ -248,18 +254,17 @@ function savePl(){LS.set("players",players);LS.set("turn",turn)}
 function renderPlayers(){
   const box=$("players");box.innerHTML="";
   players.forEach((p,i)=>{
-    const d=document.createElement("div");d.className="pl"+(i===turn%players.length?" turn":"");
+    const d=document.createElement("div");d.className="pl";
     d.innerHTML=`<span class="nm">${esc(p.n)}</span><span class="sc">${p.s}</span>`;
-    d.onclick=()=>{p.s++;savePl();renderPlayers()};
     const m=document.createElement("button");m.textContent="−";m.setAttribute("aria-label","Punkt abziehen "+p.n);
-    m.onclick=e=>{e.stopPropagation();if(p.s>0)p.s--;savePl();renderPlayers()};
-    d.appendChild(m);box.appendChild(d);
+    m.onclick=()=>{p.s--;savePl();renderPlayers()};
+    const pl=document.createElement("button");pl.textContent="+";pl.setAttribute("aria-label","Punkt für "+p.n);
+    pl.onclick=()=>{p.s++;savePl();renderPlayers()};
+    d.appendChild(m);d.appendChild(pl);box.appendChild(d);
   });
   const a=document.createElement("button");a.className="addpl";a.textContent="+ Spieler";
   a.onclick=()=>{const n=(window.prompt("Name des Spielers?")||"").trim();if(n){players.push({n,s:0});savePl();renderPlayers()}};
   box.appendChild(a);
-  const ti=$("turninfo");
-  if(players.length>1){ti.hidden=false;ti.innerHTML="Dran: <b>"+esc(players[turn%players.length].n)+"</b>"}else ti.hidden=true;
   const list=$("pllist");list.innerHTML="";
   players.forEach((p,i)=>{const r=document.createElement("div");r.className="pledit";r.innerHTML=`<input value="${esc(p.n)}" aria-label="Name"><button aria-label="Entfernen">✕</button>`;
     r.querySelector("input").onchange=e=>{p.n=e.target.value.trim()||p.n;savePl();renderPlayers()};
@@ -268,7 +273,7 @@ function renderPlayers(){
 }
 $("addplBtn").onclick=()=>{const n=$("newpl").value.trim();if(!n)return;players.push({n,s:0});$("newpl").value="";savePl();renderPlayers()};
 $("newpl").onkeydown=e=>{if(e.key==="Enter")$("addplBtn").click()};
-$("resetScores").onclick=()=>{players.forEach(p=>p.s=0);turn=0;savePl();renderPlayers()};
+$("resetScores").onclick=()=>{players.forEach(p=>p.s=0);savePl();renderPlayers()};
 
 /* ---------- Ansicht ---------- */
 function show(view){["setup","settings","game"].forEach(v=>$(v).hidden=v!==view);if(view==="game")$("game").style.display="flex"}
@@ -285,7 +290,7 @@ $("gear").onclick=()=>{if(!LS.get("tok")){show("setup");return}show("settings");
 $("refreshDevs").onclick=loadDevices;
 $("closeSettings").onclick=()=>{LS.set("startAt",$("startAt").value);show("game")};
 $("logout").onclick=()=>{LS.del("tok");LS.del("dev");show("setup")};
-$("disc").onclick=toggle;$("next").onclick=()=>next(false);$("reveal").onclick=reveal;
+$("disc").onclick=toggle;$("back").onclick=back;$("next").onclick=()=>next(false);$("reveal").onclick=reveal;
 boot();
 </script>
 </body>

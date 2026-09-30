@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#15121c">
+<title>Phils Hitster</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Figtree:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#15121c;--panel:#211c2b;--line:#3a3247;--fg:#f3eee6;--muted:#a79fb4;--accent:#ff7a45;--gold:#ffc94a;--bad:#ff5a6a;--ok:#1ed760;
+--display:"Dela Gothic One","Arial Black",Impact,sans-serif;--body:"Figtree",system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px}
+.wrap{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+header{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-family:var(--display);font-weight:400;font-size:26px;margin:0}
+h1 span{color:var(--accent)}
+.icon{background:none;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:8px 12px;font:inherit;font-size:14px;cursor:pointer;flex:0 0 auto;max-width:none}
+.count{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.disc{position:relative;width:min(70vw,290px);aspect-ratio:1;border-radius:50%;border:0;padding:0;cursor:pointer;background:repeating-radial-gradient(circle,#2b2437 0 3px,#1c1725 3px 6px);box-shadow:0 0 0 2px var(--line),0 20px 60px #0008;color:var(--fg)}
+.label{position:absolute;inset:30%;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#1a0f08;font-family:var(--display);font-size:clamp(34px,11vw,54px)}
+.disc.playing .label{animation:spin 3s linear infinite}
+.disc.busy .label{opacity:.5}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.disc.playing .label{animation:none}}
+.hint{color:var(--muted);margin:-6px 0 0;min-height:1.3em}
+.hint.err{color:var(--bad)}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
+button{font:inherit;font-weight:800;cursor:pointer;border-radius:999px;padding:14px 20px;border:1px solid var(--line);background:var(--panel);color:var(--fg);flex:1 1 140px;max-width:240px}
+button.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button.spot{background:var(--ok);color:#08130c;border-color:var(--ok)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.card{width:100%;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:6px;color:#140f1a;animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.9) rotate(-3deg);opacity:.4}to{transform:none;opacity:1}}
+.card .yr{font-family:var(--display);font-size:56px;line-height:1}
+.card .tt{font-weight:800;font-size:20px}
+.card small{opacity:.7}
+.panel{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;text-align:left}
+.panel h2{font-family:var(--display);font-weight:400;font-size:18px;margin:0}
+label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+input,select{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
+code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:block;word-break:break-all;font-size:13px}
+.small{font-size:13px;color:var(--muted);line-height:1.45}
+.devs{display:flex;flex-direction:column;gap:8px}
+.dev{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-weight:600;max-width:none;text-align:left}
+.dev.on{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Phils <span>Hitster</span></h1><button class="icon" id="gear" aria-label="Einstellungen">⚙ Einstellungen</button></header>
+
+  <!-- Setup -->
+  <section class="panel" id="setup" hidden>
+    <h2>Mit Spotify verbinden</h2>
+    <p class="small">Einmal pro Handy. Danach spielt Spotify die Songs verdeckt ab.</p>
+    <details><summary class="small">Technische Angaben</summary><div><label for="cid">Spotify Client-ID</label><input id="cid" autocomplete="off" spellcheck="false" placeholder="z. B. 3f9a…"></div>
+    <div><label>Redirect-URI für die Spotify-App</label><code id="redir"></code></div>
+    <p class="small">Diese Adresse genau so in deiner Spotify-Entwickler-App unter „Redirect URIs“ eintragen.</p></details>
+    <button class="spot" id="login">Mit Spotify verbinden</button>
+    <p class="hint err" id="setupErr"></p>
+  </section>
+
+  <!-- Settings -->
+  <section class="panel" id="settings" hidden>
+    <h2>Abspielgerät</h2>
+    <p class="small">Öffne die Spotify-App auf dem Gerät, auf dem die Musik laufen soll (Handy, Box, PC). Dann hier aktualisieren und antippen.</p>
+    <div class="devs" id="devs"></div>
+    <button id="refreshDevs">Geräte aktualisieren</button>
+    <h2>Songliste</h2>
+    <select id="deck">
+      <option value="hitster">Hitster Deutschland (308 Songs)</option>
+      <option value="phil">Phils Mix (111 Songs)</option>
+      <option value="all">Beides</option>
+    </select>
+    <div><label for="startAt">Start im Song</label>
+    <select id="startAt"><option value="0">Von Anfang an</option><option value="30">Nach 30 Sekunden</option><option value="rand">Zufällige Stelle</option></select></div>
+    <button class="primary" id="closeSettings">Fertig</button>
+    <button id="logout">Spotify trennen</button>
+  </section>
+
+  <!-- Game -->
+  <section id="game" hidden style="width:100%;display:flex;flex-direction:column;align-items:center;gap:20px">
+    <span class="count" id="count"></span>
+    <button class="disc" id="disc" aria-label="Abspielen oder Pause"><span class="label" id="lbl">?</span></button>
+    <p class="hint" id="hint">Tippe auf die Platte</p>
+    <div class="btns">
+      <button id="reveal" disabled>Aufdecken</button>
+      <button class="primary" id="next">Nächster Song</button>
+    </div>
+    <div id="result" style="width:100%"></div>
+  </section>
+</div>
+
+<script>
+const DECKS={"hitster": [{"t": "Wann wird's mal wieder richtig Sommer", "a": "Rudi Carrell", "y": 1975}, {"t": "You Can Call Me Al", "a": "Paul Simon", "y": 1986}, {"t": "Start Me Up", "a": "The Rolling Stones", "y": 1981}, {"t": "The Twist", "a": "Chubby Checker", "y": 1960}, {"t": "Blurred Lines", "a": "Robin Thicke feat. T.I. & Pharrell Williams", "y": 2013}, {"t": "Hangover", "a": "Taio Cruz, Flo Rida", "y": 2011}, {"t": "One More Time", "a": "Daft Punk", "y": 2000}, {"t": "China In Your Hand", "a": "T'Pau", "y": 1987}, {"t": "The Best", "a": "Tina Turner", "y": 1989}, {"t": "The Hustle", "a": "Van McCoy & The Soul City Symphony", "y": 1975}, {"t": "Piece of My Heart", "a": "Erma Franklin", "y": 1967}, {"t": "Hungry Eyes", "a": "Eric Carmen", "y": 1987}, {"t": "Karma Chameleon", "a": "Culture Club", "y": 1983}, {"t": "99 Luftballons", "a": "Nena", "y": 1983}, {"t": "Beinhart", "a": "Torfrock", "y": 1990}, {"t": "In Da Club", "a": "50 Cent", "y": 2003}, {"t": "Don't Go", "a": "Yazoo", "y": 1982}, {"t": "I Wanna Dance with Somebody (Who Loves Me)", "a": "Whitney Houston", "y": 1987}, {"t": "7 Years", "a": "Lukas Graham", "y": 2015}, {"t": "Sugar-Baby", "a": "Peter Kraus", "y": 1958}, {"t": "Lean On (feat. MØ)", "a": "Major Lazer & DJ Snake", "y": 2015}, {"t": "Einmal um die Welt", "a": "CRO", "y": 2012}, {"t": "Ich will keine Schokolade", "a": "Trude Herr", "y": 1960}, {"t": "80 Millionen", "a": "Max Giesinger", "y": 2016}, {"t": "Friday I'm In Love", "a": "The Cure", "y": 1992}, {"t": "What Is Love", "a": "Haddaway", "y": 1993}, {"t": "Auf uns", "a": "Andreas Bourani", "y": 2014}, {"t": "Don't Stop Believin'", "a": "Journey", "y": 1981}, {"t": "Orinoco Flow", "a": "Enya", "y": 1988}, {"t": "Über den Wolken", "a": "Reinhard Mey", "y": 1974}, {"t": "Rehab", "a": "Amy Winehouse", "y": 2006}, {"t": "Liebeskummer lohnt sich nicht", "a": "Siw Malmkvist", "y": 1964}, {"t": "You Make Me Feel (Mighty Real)", "a": "Sylvester", "y": 1978}, {"t": "Sweet Home Alabama", "a": "Lynyrd Skynyrd", "y": 1974}, {"t": "He Ain't Heavy He's My Brother", "a": "The Hollies", "y": 1969}, {"t": "Eine neue Liebe ist wie ein neues Leben", "a": "Jürgen Marcus", "y": 1972}, {"t": "Manic Monday", "a": "The Bangles", "y": 1986}, {"t": "Paradise By the Dashboard Light", "a": "Meat Loaf", "y": 1978}, {"t": "Never Ending Story", "a": "Limahl", "y": 1984}, {"t": "Don't Call Me Up", "a": "Mabel", "y": 2019}, {"t": "Under the Bridge", "a": "Red Hot Chili Peppers", "y": 1992}, {"t": "König von Deutschland", "a": "Rio Reiser", "y": 1986}, {"t": "Upside Down", "a": "Diana Ross", "y": 1980}, {"t": "Don't Speak", "a": "No Doubt", "y": 1996}, {"t": "(I Can't Get No) Satisfaction", "a": "The Rolling Stones", "y": 1965}, {"t": "Dilemma (feat. Kelly Rowland) Nelly", "a": "Kelly Rowland", "y": 2002}, {"t": "Lola", "a": "The Kinks", "y": 1970}, {"t": "Captain Jack", "a": "Captain Jack", "y": 1995}, {"t": "True Colors", "a": "Cyndi Lauper", "y": 1986}, {"t": "Hey Ya!", "a": "Outkast", "y": 2003}, {"t": "Guajira Guantanamera", "a": "Joseito Fernandez", "y": 1929}, {"t": "La Cintura", "a": "Alvaro Soler", "y": 2018}, {"t": "Sick and Tired", "a": "Anastacia", "y": 2004}, {"t": "If You Leave Me Now", "a": "Chicago", "y": 1976}, {"t": "Siebzehn Jahr, blondes Haar", "a": "Udo Jürgens", "y": 1965}, {"t": "Murder On The Dancefloor", "a": "Sophie Ellis-Bextor", "y": 2001}, {"t": "Sing Hallelujah!", "a": "Dr. Alban", "y": 1993}, {"t": "Set Fire to the Rain", "a": "Adele", "y": 2011}, {"t": "Herz an Herz", "a": "Blümchen", "y": 1996}, {"t": "Tage Wie diese", "a": "Die Toten Hosen", "y": 2012}, {"t": "Sweet Caroline", "a": "Neil Diamond", "y": 1969}, {"t": "Do Wah Diddy Diddy", "a": "Manfred Mann", "y": 1964}, {"t": "Über sieben Brücken musst du gehn", "a": "Karat", "y": 1978}, {"t": "Don't Leave Me This Way", "a": "Thelma Houston", "y": 1976}, {"t": "Can't Hold Us (feat. Ray Dalton)", "a": "Macklemore & Ryan Lewis", "y": 2011}, {"t": "Do You Know? (The Ping Pong Song)", "a": "Enrique Iglesias", "y": 2007}, {"t": "Warum?", "a": "Tic Tac Toe", "y": 1997}, {"t": "Gimme Hope Jo'Anna", "a": "Eddy Grant", "y": 1988}, {"t": "Wind of Change", "a": "Scorpions", "y": 1991}, {"t": "Le Freak", "a": "CHIC", "y": 1978}, {"t": "Haus am See", "a": "Peter Fox", "y": 2008}, {"t": "Poker Face", "a": "Lady Gaga", "y": 2008}, {"t": "It's a Heartache", "a": "Bonnie Tyler", "y": 1977}, {"t": "Johnny B. Goode", "a": "Chuck Berry", "y": 1958}, {"t": "White Wedding", "a": "Billy Idol", "y": 1982}, {"t": "Rigoletto: \"La Donna E' Mobile\"", "a": "Enrico Caruso", "y": 1908}, {"t": "Without You (feat. Sandro Cavazza)", "a": "Avicii, Sandro Cavazza", "y": 2017}, {"t": "Volare (Nel Blu di Pinto di Blu)", "a": "Gipsy Kings", "y": 1989}, {"t": "Ca plane pour moi", "a": "Plastic Bertrand", "y": 1977}, {"t": "Born to Be Alive", "a": "Patrick Hernandez", "y": 1978}, {"t": "Whole Lotta Love", "a": "Led Zeppelin", "y": 1969}, {"t": "Ein Kompliment", "a": "Sportfreunde Stiller", "y": 2002}, {"t": "In the Mood", "a": "Glenn Miller", "y": 1939}, {"t": "Wahnsinn", "a": "Wolfgang Petry", "y": 1983}, {"t": "Counting Stars", "a": "OneRepublic", "y": 2013}, {"t": "Dragostea din tei", "a": "O-Zone", "y": 2003}, {"t": "Everybody Hurts", "a": "R.E.M.", "y": 1992}, {"t": "Just Give Me a Reason (feat. Nate Ruess)", "a": "Pink, Nate Ruess", "y": 2013}, {"t": "Joyride", "a": "Roxette", "y": 1991}, {"t": "(We're Gonna) Rock Around The Clock", "a": "Bill Haley & His Comets", "y": 1954}, {"t": "Bette Davis Eyes", "a": "Kim Carnes", "y": 1981}, {"t": "Lambada", "a": "Kaoma", "y": 1989}, {"t": "Ain't Nobody", "a": "Rufus, Chaka Khan", "y": 1983}, {"t": "Have You Ever Seen The Rain", "a": "Creedence Clearwater Revival", "y": 1971}, {"t": "(I've Had) The Time of My Life", "a": "Bill Medley, Jennifer Warnes", "y": 1987}, {"t": "Piu bella cosa", "a": "Eros Ramazzotti", "y": 1996}, {"t": "No Son Of Mine", "a": "Genesis", "y": 1991}, {"t": "Happy", "a": "Pharrell Williams", "y": 2013}, {"t": "Wonderwall", "a": "Oasis", "y": 1995}, {"t": "You Can't Hurry Love", "a": "The Supremes", "y": 1966}, {"t": "Gold Digger", "a": "Kanye West, Jamie Foxx", "y": 2005}, {"t": "Ich will Spass", "a": "Markus", "y": 1982}, {"t": "Lady - Hear Me Tonight", "a": "Modjo", "y": 2000}, {"t": "She Drives Me Crazy", "a": "Fine Young Cannibals", "y": 1988}, {"t": "Heimweh (Dort wo die Blumen blüh'n)", "a": "Freddy Quinn", "y": 1956}, {"t": "Moskau", "a": "Dschinghis Khan", "y": 1979}, {"t": "Cotton Eye Joe", "a": "Rednex", "y": 1994}, {"t": "I Can Help", "a": "Billy Swan", "y": 1974}, {"t": "Dancing In the Dark", "a": "Bruce Springsteen", "y": 1984}, {"t": "Day-O (The Banana Boat Song)", "a": "Harry Belafonte", "y": 1956}, {"t": "Ich will 'nen Cowboy als Mann", "a": "Gitte Haenning", "y": 1963}, {"t": "Break My Heart", "a": "Dua Lipa", "y": 2020}, {"t": "Wrecking Ball", "a": "Miley Cyrus", "y": 2013}, {"t": "Jailhouse Rock", "a": "Elvis Presley", "y": 1957}, {"t": "Adore You", "a": "Harry Styles", "y": 2019}, {"t": "Good Golly Miss Molly", "a": "Little Richard", "y": 1958}, {"t": "The Ketchup Song", "a": "Las Ketchup", "y": 2002}, {"t": "Relax, Take It Easy", "a": "MIKA", "y": 2007}, {"t": "I'm a Believer", "a": "The Monkees", "y": 1966}, {"t": "Schuld war nur der Bossa Nova", "a": "Manuela", "y": 1963}, {"t": "I Love It (feat. Charli XCX)", "a": "Icona Pop, Charli XCX", "y": 2012}, {"t": "World Hold on (Children of the Sky)", "a": "Bob Sinclair", "y": 2006}, {"t": "Born To Be Wild", "a": "Steppenwolf", "y": 1968}, {"t": "Valerie (feat. Amy Winehouse)", "a": "Mark Ronson, Amy Winehouse", "y": 2007}, {"t": "(What A) Wonderful World", "a": "Sam Cooke", "y": 1960}, {"t": "Männer", "a": "Herbert Grönemeyer", "y": 1984}, {"t": "You Get What You Give", "a": "New Radicals", "y": 1998}, {"t": "Mama", "a": "Heintje", "y": 1968}, {"t": "My Heart Will Go On", "a": "Celine Dion", "y": 1997}, {"t": "Dancing On The Ceiling", "a": "Lionel Richie", "y": 1986}, {"t": "Give It Up", "a": "KC & The Sunshine Band", "y": 1982}, {"t": "Feel", "a": "Robbie Williams", "y": 2002}, {"t": "How You Remind Me", "a": "Nickelback", "y": 2001}, {"t": "Got My Mind Set On You", "a": "George Harrison", "y": 1987}, {"t": "Verdammt lch lieb' dich", "a": "Matthias Reim", "y": 1990}, {"t": "I Like To Move It", "a": "Reel 2 Real", "y": 1993}, {"t": "Don't You Want Me", "a": "The Human League", "y": 1981}, {"t": "Drei Uhr Nachts", "a": "Mark Forster, LEA", "y": 2021}, {"t": "Westerland", "a": "Die Ärzte", "y": 1988}, {"t": "Every Breath You Take", "a": "The Police", "y": 1983}, {"t": "Bitter Sweet Symphony", "a": "The Verve", "y": 1997}, {"t": "Gettin' Jiggy Wit It", "a": "Will Smith", "y": 1998}, {"t": "Barbie Girl", "a": "Aqua", "y": 1997}, {"t": "Pack Die Badehose Ein", "a": "Cornelia Froboess", "y": 1951}, {"t": "Torn", "a": "Natalie Imbruglia", "y": 1997}, {"t": "The Wanderer", "a": "Dion", "y": 1961}, {"t": "La Bamba", "a": "Ritchie Valens", "y": 1958}, {"t": "Toosie Slide", "a": "Drake", "y": 2020}, {"t": "drivers license", "a": "Olivia Rodrigo", "y": 2021}, {"t": "Moves Like Jagger", "a": "Maroon 5, Christina Aguilera", "y": 2011}, {"t": "Atemlos durch die Nacht", "a": "Helene Fischer", "y": 2013}, {"t": "Stop", "a": "Spice Girls", "y": 1998}, {"t": "If You Had My Love", "a": "Jennifer Lopez", "y": 1999}, {"t": "More Than a Feeling", "a": "Boston", "y": 1976}, {"t": "Disco Inferno", "a": "The Trammps", "y": 1976}, {"t": "Someone You Loved", "a": "Lewis Capaldi", "y": 2018}, {"t": "MIEF! (Nimm mich jetzt, auch wenn ich stinke)", "a": "Die Doofen", "y": 1995}, {"t": "Sweet Child O' Mine", "a": "Guns N' Roses", "y": 1988}, {"t": "Your Song", "a": "Elton John", "y": 1970}, {"t": "Congratulations", "a": "Cliff Richard", "y": 1968}, {"t": "You're So Vain", "a": "Carly Simon", "y": 1972}, {"t": "Easy", "a": "Commodores", "y": 1977}, {"t": "Forever Young", "a": "Alphaville", "y": 1984}, {"t": "Maneater", "a": "Daryl Hall & John Oates", "y": 1982}, {"t": "Rock Me Amadeus", "a": "Falco", "y": 1985}, {"t": "I Got You Babe", "a": "Sonny & Cher", "y": 1965}, {"t": "Junge", "a": "Die Ärzte", "y": 2007}, {"t": "Everywhere", "a": "Fleetwood Mac", "y": 1987}, {"t": "Zombie", "a": "The Cranberries", "y": 1994}, {"t": "Barbra Streisand", "a": "Duck Sauce", "y": 2010}, {"t": "No One", "a": "Alicia Keys", "y": 2007}, {"t": "I Knew You Were Waiting (For Me)", "a": "George Michael, Aretha Franklin", "y": 1987}, {"t": "December, 1963 (Oh What a Night!)", "a": "Frankie Valli & The Four Seasons", "y": 1975}, {"t": "4 Minutes (feat. Justin Timberlake and Timbaland)", "a": "Madonna", "y": 2008}, {"t": "Autobahn", "a": "Kraftwerk", "y": 1974}, {"t": "She's A Lady", "a": "Tom Jones", "y": 1971}, {"t": "Señorita", "a": "Shawn Mendes, Camila Cabello", "y": 2019}, {"t": "Killing Me Softly With His Song", "a": "Fugees", "y": 1996}, {"t": "Oops!...I Did It Again", "a": "Britney Spears", "y": 2000}, {"t": "Nur noch kurz die Welt retten", "a": "Tim Bendzko", "y": 2011}, {"t": "Whatcha Say", "a": "Jason Derulo", "y": 2009}, {"t": "Abenteuerland", "a": "Pur", "y": 1995}, {"t": "Talk", "a": "Coldplay", "y": 2005}, {"t": "Somebody That I Used to Know (feat. Kimbra)", "a": "Gotye", "y": 2011}, {"t": "Fast Car", "a": "Tracy Chapman", "y": 1988}, {"t": "The Living Years", "a": "Mike + The Mechanics", "y": 1988}, {"t": "Ab in den Süden", "a": "Buddy", "y": 2003}, {"t": "The Boy Is Mine", "a": "Brandy & Monica", "y": 1998}, {"t": "All I Have to Do Is Dream", "a": "The Everly Brothers", "y": 1958}, {"t": "Surfin' U.S.A.", "a": "The Beach Boys", "y": 1963}, {"t": "Whole Again", "a": "Atomic Kitten", "y": 2001}, {"t": "Right Here Waiting", "a": "Richard Marx", "y": 1989}, {"t": "Geboren um zu leben", "a": "Unheilig", "y": 2010}, {"t": "Die Nacht von Freitag auf Montag", "a": "SDP feat. Sido", "y": 2012}, {"t": "Fallin'", "a": "Alicia Keys", "y": 2001}, {"t": "Firework", "a": "Katy Perry", "y": 2010}, {"t": "Genie In A Bottle", "a": "Christina Aguilera", "y": 1999}, {"t": "Euphoria", "a": "Loreen", "y": 2012}, {"t": "Africa", "a": "TOTO", "y": 1982}, {"t": "At The Hop", "a": "Danny & The Juniors", "y": 1957}, {"t": "Mr. Vain", "a": "Culture Beat", "y": 1993}, {"t": "Sweet Dreams (Are Made Of This)", "a": "Eurythmics, Annie Lennox, Dave Stewart", "y": 1983}, {"t": "All About That Bass", "a": "Meghan Trainor", "y": 2014}, {"t": "Don't Dream It's Over", "a": "Crowded House", "y": 1986}, {"t": "Purple Rain", "a": "Prince", "y": 1984}, {"t": "All of Me", "a": "John Legend", "y": 2013}, {"t": "Schöner fremder Mann", "a": "Connie Francis", "y": 1964}, {"t": "Love Is All Around", "a": "Wet Wet Wet", "y": 1994}, {"t": "Gangsta's Paradise", "a": "Coolio feat. L.V.", "y": 1995}, {"t": "See You Later Alligator", "a": "Bill Haley & His Comets", "y": 1956}, {"t": "Jump Around", "a": "House Of Pain", "y": 1992}, {"t": "Nothing Compares 2 U", "a": "Sinéad O'Connor", "y": 1990}, {"t": "Engel", "a": "Rammstein", "y": 1997}, {"t": "Because of You", "a": "Kelly Clarkson", "y": 2005}, {"t": "Du trägst keine Liebe in dir", "a": "Echt", "y": 1999}, {"t": "Part-Time Lover", "a": "Stevie Wonder", "y": 1985}, {"t": "Walk Of Life", "a": "Dire Straits", "y": 1985}, {"t": "All That She Wants", "a": "Ace of Base", "y": 1992}, {"t": "Alles nur geklaut", "a": "Die Prinzen", "y": 1993}, {"t": "Waterloo", "a": "ABBA", "y": 1974}, {"t": "Heaven", "a": "Bryan Adams", "y": 1985}, {"t": "Durch den Monsun", "a": "Tokio Hotel", "y": 2005}, {"t": "The Locomotion", "a": "Little Eva", "y": 1962}, {"t": "Smells Like Teen Spirit", "a": "Nirvana", "y": 1991}, {"t": "Fly Away", "a": "Lenny Kravitz", "y": 1998}, {"t": "Smalltown Boy", "a": "Bronski Beat", "y": 1984}, {"t": "Ring of Fire", "a": "Johnny Cash", "y": 1963}, {"t": "These Boots Are Made for Walkin'", "a": "Nancy Sinatra", "y": 1965}, {"t": "Price Tag ft. B.o.B", "a": "Jessie J", "y": 2011}, {"t": "Itsy Bitsy Teenie Weenie Honolulu Strand Bikini", "a": "Caterina Valente, Silvio Francesco", "y": 1960}, {"t": "Informer", "a": "Snow", "y": 1992}, {"t": "Das Beste", "a": "Silbermond", "y": 2006}, {"t": "Celebration", "a": "Kool & The Gang", "y": 1980}, {"t": "Believe", "a": "Cher", "y": 1998}, {"t": "Knock On Wood", "a": "Amii Stewart", "y": 1979}, {"t": "Mercy", "a": "Duffy", "y": 2008}, {"t": "We Are Family", "a": "Sister Sledge", "y": 1979}, {"t": "In the Summertime", "a": "Mungo Jerry", "y": 1970}, {"t": "Return of the Mack", "a": "Mark Morrison", "y": 1996}, {"t": "Zuckerpuppe (Aus der Bauchtanz-Truppe)", "a": "Bill Ramsey", "y": 1961}, {"t": "Nah Neh Nah", "a": "Vaya Con Dios", "y": 1990}, {"t": "Emanuela", "a": "Fettes Brot", "y": 2005}, {"t": "Skandal im Sperrbezirk", "a": "Spider Murphy Gang", "y": 1981}, {"t": "It's My Life", "a": "Bon Jovi", "y": 2000}, {"t": "Ganz Paris Träumt Von Der Liebe", "a": "Caterina Valente", "y": 1954}, {"t": "Crazy In Love (feat. Jay-Z)", "a": "Beyoncé", "y": 2003}, {"t": "Blinding Lights", "a": "The Weeknd", "y": 2019}, {"t": "Die Gitarre und das Meer", "a": "Freddy Quinn", "y": 1959}, {"t": "Save Tonight", "a": "Eagle-Eye Cherry", "y": 1997}, {"t": "Holding Back the Years", "a": "Simply Red", "y": 1985}, {"t": "Die Eine", "a": "Die Firma", "y": 1998}, {"t": "1000 und 1 Nacht", "a": "Klaus Lage", "y": 1984}, {"t": "Die guten Zeiten", "a": "Wincent Weiss, Johannes Oerding", "y": 2021}, {"t": "Circles", "a": "Post Malone", "y": 2019}, {"t": "Marmor, Stein und Eisen bricht", "a": "Drafi Deutscher", "y": 1965}, {"t": "Why", "a": "Annie Lennox", "y": 1992}, {"t": "Cheap Thrills", "a": "Sia", "y": 2015}, {"t": "Under Pressure", "a": "Queen, David Bowie", "y": 1981}, {"t": "Numb / Encore", "a": "JAY-Z, Linkin Park", "y": 2004}, {"t": "Good Vibrations", "a": "The Beach Boys", "y": 1966}, {"t": "Ain't That A Shame", "a": "Fats Domino", "y": 1955}, {"t": "Das Boot", "a": "U96", "y": 1992}, {"t": "Praise You", "a": "Fatboy Slim", "y": 1999}, {"t": "Could I Have This Kiss Forever", "a": "Enrique Iglesias, Whitney Houston", "y": 2000}, {"t": "Major Tom (Völlig lösgelöst)", "a": "Peter Schilling", "y": 1982}, {"t": "Where Is The Love?", "a": "Black Eyed Peas", "y": 2003}, {"t": "It Wasn't Me", "a": "Shaggy, Rik Rok", "y": 2000}, {"t": "Dance Monkey", "a": "Tones And I", "y": 2019}, {"t": "It's In The Kiss (The Shoop Shoop Song)", "a": "Betty Everett", "y": 1964}, {"t": "I Got You (I Feel Good)", "a": "James Brown & The Famous Flames", "y": 1965}, {"t": "Lonely", "a": "Akon", "y": 2005}, {"t": "Super Freak", "a": "Rick James", "y": 1981}, {"t": "Tränen lügen nicht", "a": "Michael Holm", "y": 1974}, {"t": "When a Man Loves a Woman", "a": "Percy Sledge", "y": 1966}, {"t": "Blue Bayou", "a": "Linda Ronstadt", "y": 1977}, {"t": "Jolene", "a": "Dolly Parton", "y": 1973}, {"t": "Like a Prayer", "a": "MadHouse", "y": 2002}, {"t": "That's Amore", "a": "Dean Martin", "y": 1953}, {"t": "Piano Man", "a": "Billy Joel", "y": 1973}, {"t": "Er hat ein knallrotes Gummiboot", "a": "Wencke Myhre", "y": 1970}, {"t": "Space Oddity", "a": "David Bowie", "y": 1969}, {"t": "Anyone", "a": "Justin Bieber", "y": 2021}, {"t": "Scars To Your Beautiful", "a": "Alessia Cara", "y": 2016}, {"t": "Get Back", "a": "The Beatles", "y": 1969}, {"t": "Waka Waka (This Time for Africa) ft. Freshlyground", "a": "Shakira", "y": 2010}, {"t": "Let's Stick Together", "a": "Bryan Ferry", "y": 1976}, {"t": "Put Your Records On", "a": "Corinne Bailey Rae", "y": 2006}, {"t": "Ice Ice Baby", "a": "Vanilla Ice", "y": 1990}, {"t": "When I Need You", "a": "Leo Sayer", "y": 1977}, {"t": "bad guy", "a": "Billie Eilish", "y": 2019}, {"t": "Feel It Still", "a": "Portugal. The Man", "y": 2017}, {"t": "Shallow", "a": "Lady Gaga, Bradley Cooper", "y": 2018}, {"t": "Vom selben Stern", "a": "Ich + Ich", "y": 2007}, {"t": "Hey, Soul Sister", "a": "Train", "y": 2009}, {"t": "Can't Help Falling in Love", "a": "Elvis Presley", "y": 1961}, {"t": "Call on Me", "a": "Eric Prydz", "y": 2004}, {"t": "I Heard It Through The Grapevine", "a": "Marvin Gaye", "y": 1968}, {"t": "Ein Bett Im Kornfeld", "a": "Jürgen Drews", "y": 1976}, {"t": "Dancing in the Moonlight", "a": "Toploader", "y": 2000}, {"t": "Escape (The Pina Colada Song)", "a": "Rupert Holmes", "y": 1979}, {"t": "Thunder", "a": "Imagine Dragons", "y": 2017}, {"t": "Oh, Pretty Woman", "a": "Roy Orbison", "y": 1964}, {"t": "Lollipop", "a": "The Chordettes", "y": 1958}, {"t": "No Woman No Cry", "a": "Bob Marley & The Wailers", "y": 1974}, {"t": "Respect", "a": "Aretha Franklin", "y": 1967}, {"t": "You Can Get It If You Really Want", "a": "Jimmy Cliff", "y": 1970}, {"t": "Wooly Bully", "a": "Sam The Sham & The Pharaohs", "y": 1965}, {"t": "Fireflies", "a": "Owl City", "y": 2009}], "phil": [{"t": "Jailhouse Rock", "a": "Elvis Presley", "y": 1957}, {"t": "Johnny B. Goode", "a": "Chuck Berry", "y": 1958}, {"t": "(I Can't Get No) Satisfaction", "a": "The Rolling Stones", "y": 1965}, {"t": "Like a Rolling Stone", "a": "Bob Dylan", "y": 1965}, {"t": "Paint It Black", "a": "The Rolling Stones", "y": 1966}, {"t": "Good Vibrations", "a": "The Beach Boys", "y": 1966}, {"t": "Respect", "a": "Aretha Franklin", "y": 1967}, {"t": "Hey Jude", "a": "The Beatles", "y": 1968}, {"t": "Suspicious Minds", "a": "Elvis Presley", "y": 1969}, {"t": "Imagine", "a": "John Lennon", "y": 1971}, {"t": "Superstition", "a": "Stevie Wonder", "y": 1972}, {"t": "Waterloo", "a": "ABBA", "y": 1974}, {"t": "Griechischer Wein", "a": "Udo Jürgens", "y": 1974, "id": "452WSSzuklpg0w4RKTlkvn"}, {"t": "Bohemian Rhapsody", "a": "Queen", "y": 1975}, {"t": "Dancing Queen", "a": "ABBA", "y": 1976}, {"t": "Aber bitte mit Sahne", "a": "Udo Jürgens", "y": 1976}, {"t": "Stayin' Alive", "a": "Bee Gees", "y": 1977}, {"t": "Dreams", "a": "Fleetwood Mac", "y": 1977}, {"t": "Le Freak", "a": "Chic", "y": 1978}, {"t": "I Will Survive", "a": "Gloria Gaynor", "y": 1978}, {"t": "Highway to Hell", "a": "AC/DC", "y": 1979}, {"t": "Africa", "a": "Toto", "y": 1982}, {"t": "Total Eclipse of the Heart", "a": "Bonnie Tyler", "y": 1983, "id": "7wuJGgpTNzbUyn26IOY6rj"}, {"t": "Sweet Dreams (Are Made of This)", "a": "Eurythmics", "y": 1983}, {"t": "Blue Monday", "a": "New Order", "y": 1983}, {"t": "99 Luftballons", "a": "Nena", "y": 1983}, {"t": "Major Tom (Völlig losgelöst)", "a": "Peter Schilling", "y": 1983}, {"t": "Purple Rain", "a": "Prince", "y": 1984, "id": "1uvyZBs4IZYRebHIB1747m"}, {"t": "Smooth Operator", "a": "Sade", "y": 1984}, {"t": "Livin' on a Prayer", "a": "Bon Jovi", "y": 1986}, {"t": "Promised Land", "a": "Joe Smooth", "y": 1987, "id": "796T2ROxTNibXRjVhjSzCa"}, {"t": "Pump Up the Jam", "a": "Technotronic", "y": 1989}, {"t": "Thunderstruck", "a": "AC/DC", "y": 1990, "id": "57bgtoPSgt236HzfBOd8kj"}, {"t": "Gonna Make You Sweat (Everybody Dance Now)", "a": "C+C Music Factory", "y": 1990}, {"t": "Smells Like Teen Spirit", "a": "Nirvana", "y": 1991}, {"t": "Losing My Religion", "a": "R.E.M.", "y": 1991}, {"t": "Black or White", "a": "Michael Jackson", "y": 1991}, {"t": "Rhythm Is a Dancer", "a": "Snap!", "y": 1992}, {"t": "What Is Love", "a": "Haddaway", "y": 1993}, {"t": "Hyper Hyper", "a": "Scooter", "y": 1994}, {"t": "Zombie", "a": "The Cranberries", "y": 1994}, {"t": "Wonderwall", "a": "Oasis", "y": 1995}, {"t": "Children", "a": "Robert Miles", "y": 1995}, {"t": "Insomnia", "a": "Faithless", "y": 1995}, {"t": "Born Slippy .NUXX", "a": "Underworld", "y": 1995}, {"t": "Virtual Insanity", "a": "Jamiroquai", "y": 1996, "id": "24SUWisv2lYQiB3bVpE1sn"}, {"t": "Freed from Desire", "a": "Gala", "y": 1996}, {"t": "Around the World", "a": "Daft Punk", "y": 1997}, {"t": "Angels", "a": "Robbie Williams", "y": 1997}, {"t": "The Rockafeller Skank", "a": "Fatboy Slim", "y": 1998, "id": "5AgCO3dc2kuSicCsw09YCA"}, {"t": "Music Sounds Better with You", "a": "Stardust", "y": 1998}, {"t": "How Much Is the Fish?", "a": "Scooter", "y": 1998}, {"t": "Horny '98", "a": "Mousse T.", "y": 1998}, {"t": "...Baby One More Time", "a": "Britney Spears", "y": 1998}, {"t": "Right Here, Right Now", "a": "Fatboy Slim", "y": 1999, "id": "5Sh9v7RwibuV34tdjscwx5"}, {"t": "U Don't Know Me", "a": "Armand Van Helden", "y": 1999, "id": "7BpyfQEmvi0sUmOq29plEE"}, {"t": "Sandstorm", "a": "Darude", "y": 1999}, {"t": "Mambo No. 5", "a": "Lou Bega", "y": 1999}, {"t": "One More Time", "a": "Daft Punk", "y": 2000}, {"t": "Lady (Hear Me Tonight)", "a": "Modjo", "y": 2000}, {"t": "Yellow", "a": "Coldplay", "y": 2000}, {"t": "Sonne", "a": "Rammstein", "y": 2001}, {"t": "Murder on the Dancefloor", "a": "Sophie Ellis-Bextor", "y": 2001}, {"t": "Country Roads", "a": "Hermes House Band", "y": 2001}, {"t": "Lose Yourself", "a": "Eminem", "y": 2002}, {"t": "Ein Kompliment", "a": "Sportfreunde Stiller", "y": 2002}, {"t": "Seven Nation Army", "a": "The White Stripes", "y": 2003}, {"t": "Crazy in Love", "a": "Beyoncé", "y": 2003}, {"t": "In da Club", "a": "50 Cent", "y": 2003}, {"t": "Hey Ya!", "a": "OutKast", "y": 2003}, {"t": "My My My", "a": "Armand Van Helden", "y": 2004}, {"t": "Love Generation", "a": "Bob Sinclar", "y": 2005, "id": "0ZzxMTVrZ68e5d0Rmybfod"}, {"t": "World, Hold On", "a": "Bob Sinclar", "y": 2006}, {"t": "Rehab", "a": "Amy Winehouse", "y": 2006}, {"t": "Umbrella", "a": "Rihanna", "y": 2007}, {"t": "Viva la Vida", "a": "Coldplay", "y": 2008, "id": "3Fcfwhm8oRrBvBZ8KGhtea"}, {"t": "Poker Face", "a": "Lady Gaga", "y": 2008}, {"t": "When Love Takes Over", "a": "David Guetta", "y": 2009}, {"t": "Rolling in the Deep", "a": "Adele", "y": 2010, "id": "4OSBTYWVwsQhGLF9NHvIbR"}, {"t": "Titanium", "a": "David Guetta feat. Sia", "y": 2011, "id": "0TDLuuLlV54CkRRUOahJb4"}, {"t": "Levels", "a": "Avicii", "y": 2011}, {"t": "Party Rock Anthem", "a": "LMFAO", "y": 2011}, {"t": "Somebody That I Used to Know", "a": "Gotye", "y": 2011}, {"t": "Don't You Worry Child", "a": "Swedish House Mafia", "y": 2012}, {"t": "Gangnam Style", "a": "PSY", "y": 2012}, {"t": "Tage wie diese", "a": "Die Toten Hosen", "y": 2012}, {"t": "Get Lucky", "a": "Daft Punk", "y": 2013}, {"t": "Wake Me Up", "a": "Avicii", "y": 2013}, {"t": "Atemlos durch die Nacht", "a": "Helene Fischer", "y": 2013}, {"t": "Happy", "a": "Pharrell Williams", "y": 2013}, {"t": "Summer", "a": "Calvin Harris", "y": 2014, "id": "6YUTL4dYpB9xZO5qExPf05"}, {"t": "Uptown Funk", "a": "Mark Ronson feat. Bruno Mars", "y": 2014}, {"t": "Hello", "a": "Adele", "y": 2015}, {"t": "Hotline Bling", "a": "Drake", "y": 2015}, {"t": "One Dance", "a": "Drake", "y": 2016}, {"t": "Shape of You", "a": "Ed Sheeran", "y": 2017}, {"t": "Despacito", "a": "Luis Fonsi", "y": 2017}, {"t": "Cola", "a": "CamelPhat & Elderbrook", "y": 2017}, {"t": "SICKO MODE", "a": "Travis Scott", "y": 2018, "id": "2xLMifQCjDGFmkHkpNLD9h"}, {"t": "God's Plan", "a": "Drake", "y": 2018}, {"t": "Losing It", "a": "Fisher", "y": 2018}, {"t": "bad guy", "a": "Billie Eilish", "y": 2019}, {"t": "Blinding Lights", "a": "The Weeknd", "y": 2019}, {"t": "Levitating", "a": "Dua Lipa", "y": 2020}, {"t": "Heat Waves", "a": "Glass Animals", "y": 2020}, {"t": "As It Was", "a": "Harry Styles", "y": 2022}, {"t": "Delilah (pull me out of this)", "a": "Fred again..", "y": 2022}, {"t": "Flowers", "a": "Miley Cyrus", "y": 2023}, {"t": "Prada", "a": "cassö, RAYE & D-Block Europe", "y": 2023}, {"t": "Espresso", "a": "Sabrina Carpenter", "y": 2024}, {"t": "It's That Time", "a": "Marlon Hoffstadt & DJ Daddy Trance", "y": 2024}]};
+const DEFAULT_CID="496024bb877242e2af76ea47e5c57337";
+const SCOPES="user-modify-playback-state user-read-playback-state";
+const REDIRECT=location.origin+location.pathname;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d=null){try{const v=localStorage.getItem("ph_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("ph_"+k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem("ph_"+k)}catch(e){}}};
+const DEC={1950:"#9fb4ff",1960:"#8fd3ff",1970:"#7fe3c9",1980:"#b7ec7a",1990:"#ffe26a",2000:"#ffb35c",2010:"#ff8f7a",2020:"#ff8fc7"};
+const col=y=>DEC[Math.floor(y/10)*10]||"#c9c3d6";
+
+/* ---------- Auth (PKCE, kein Secret nötig) ---------- */
+const b64url=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+async function login(){
+  const cid=$("cid").value.trim();if(!cid){$("setupErr").textContent="Bitte zuerst die Client-ID eintragen.";return}
+  LS.set("cid",cid);
+  const verifier=b64url(crypto.getRandomValues(new Uint8Array(64)));
+  const challenge=b64url(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier)));
+  LS.set("verifier",verifier);
+  const p=new URLSearchParams({client_id:cid,response_type:"code",redirect_uri:REDIRECT,code_challenge_method:"S256",code_challenge:challenge,scope:SCOPES});
+  location.href="https://accounts.spotify.com/authorize?"+p;
+}
+async function tokenReq(params){
+  const r=await fetch("https://accounts.spotify.com/api/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams(params)});
+  const j=await r.json();if(!r.ok)throw new Error(j.error_description||j.error||"Anmeldung fehlgeschlagen");
+  LS.set("tok",{a:j.access_token,r:j.refresh_token||LS.get("tok",{}).r,exp:Date.now()+(j.expires_in-60)*1000});
+}
+async function handleRedirect(){
+  const q=new URLSearchParams(location.search);
+  if(q.get("error")){history.replaceState(null,"",REDIRECT);$("setupErr").textContent="Spotify-Anmeldung abgebrochen: "+q.get("error");return}
+  if(!q.get("code"))return;
+  history.replaceState(null,"",REDIRECT);
+  try{await tokenReq({grant_type:"authorization_code",code:q.get("code"),redirect_uri:REDIRECT,client_id:LS.get("cid"),code_verifier:LS.get("verifier")})}
+  catch(e){$("setupErr").textContent=e.message}
+}
+async function token(){
+  const t=LS.get("tok");if(!t)return null;
+  if(Date.now()<t.exp)return t.a;
+  await tokenReq({grant_type:"refresh_token",refresh_token:t.r,client_id:LS.get("cid")});
+  return LS.get("tok").a;
+}
+async function api(path,opt={}){
+  let tk=await token();if(!tk)throw {code:"auth"};
+  const go=()=>fetch("https://api.spotify.com/v1"+path,{...opt,headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json",...(opt.headers||{})}});
+  let r=await go();
+  if(r.status===401){const t=LS.get("tok");t.exp=0;LS.set("tok",t);tk=await token();r=await go()}
+  if(r.status===204||r.status===202)return null;
+  const txt=await r.text();let j=null;try{j=txt?JSON.parse(txt):null}catch(e){}
+  if(!r.ok)throw {code:r.status,reason:j?.error?.reason,msg:j?.error?.message||txt};
+  return j;
+}
+
+/* ---------- Geräte ---------- */
+async function loadDevices(){
+  const box=$("devs");box.innerHTML='<p class="small">Suche Geräte …</p>';
+  try{
+    const j=await api("/me/player/devices");const sel=LS.get("dev");
+    if(!j.devices.length){box.innerHTML='<p class="small">Kein Gerät gefunden. Spotify-App öffnen, kurz irgendeinen Song starten, dann aktualisieren.</p>';return}
+    box.innerHTML="";
+    j.devices.forEach(d=>{const b=document.createElement("button");b.className="dev"+(sel&&sel.id===d.id?" on":"");b.innerHTML=`<span>${esc(d.name)}</span><span class="small">${esc(d.type)}${d.is_active?" · aktiv":""}</span>`;b.onclick=()=>{LS.set("dev",{id:d.id,name:d.name});loadDevices()};box.appendChild(b)});
+  }catch(e){box.innerHTML=`<p class="small">Geräte konnten nicht geladen werden (${esc(e.msg||e.code)}).</p>`}
+}
+
+/* ---------- Spiel ---------- */
+let deck=[],pos=-1,cur=null,playing=false,revealed=false;
+function buildDeck(){
+  const k=LS.get("deck","hitster");const list=k==="all"?[...DECKS.hitster,...DECKS.phil]:DECKS[k];
+  deck=list.map(s=>s);for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}
+  pos=-1;$("count").textContent=deck.length+" Songs im Stapel";
+}
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\(.*?\)|\[.*?\]|feat\..*$| - .*$/g,"").replace(/[^a-z0-9]+/g," ").trim();
+async function resolve(s){
+  if(s.id)return {uri:"spotify:track:"+s.id,name:s.t,artist:s.a};
+  const cache=LS.get("cache",{});const key=s.a+"|"+s.t;if(cache[key])return cache[key];
+  const tries=[`track:"${s.t}" artist:"${s.a.split(/,| feat| &| und /i)[0]}"`,`${s.t} ${s.a}`];
+  for(const q of tries){
+    const j=await api("/search?type=track&limit=5&market=DE&q="+encodeURIComponent(q));
+    const items=(j?.tracks?.items||[]).filter(t=>!/karaoke|instrumental|cover|tribute/i.test(t.name+" "+t.album.name));
+    if(!items.length)continue;
+    const want=norm(s.t);const best=items.find(t=>norm(t.name)===want)||items.find(t=>norm(t.name).includes(want)||want.includes(norm(t.name)))||items[0];
+    const r={uri:best.uri,name:best.name,artist:best.artists.map(a=>a.name).join(", "),dur:best.duration_ms};
+    cache[key]=r;LS.set("cache",cache);return r;
+  }
+  throw {code:"notfound"};
+}
+function hint(t,err){$("hint").textContent=t;$("hint").className="hint"+(err?" err":"")}
+function errText(e){
+  if(e.code==="auth")return "Nicht mit Spotify verbunden.";
+  if(e.code==="notfound")return "Song bei Spotify nicht gefunden, weiter mit Nächster Song.";
+  if(e.code===404||e.reason==="NO_ACTIVE_DEVICE")return "Kein aktives Gerät. Spotify-App öffnen und unter ⚙ ein Gerät wählen.";
+  if(e.code===403)return "Spotify erlaubt das nicht ("+(e.reason||e.msg)+"). Premium und Nutzerliste der Entwickler-App prüfen.";
+  if(e.code===429)return "Zu viele Anfragen, kurz warten.";
+  return "Fehler: "+(e.msg||e.code||e);
+}
+async function playCurrent(){
+  const s=deck[pos];$("disc").classList.add("busy");hint("Lade …");
+  try{
+    cur=await resolve(s);
+    const dev=LS.get("dev");const st=LS.get("startAt","0");
+    let ms=0;if(st==="30")ms=30000;else if(st==="rand"&&cur.dur)ms=Math.floor(Math.random()*Math.max(0,cur.dur-60000));
+    await api("/me/player/play"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT",body:JSON.stringify({uris:[cur.uri],position_ms:ms})});
+    playing=true;$("disc").classList.add("playing");hint("Läuft auf "+(dev?dev.name:"Spotify")+". Tippen für Pause");
+  }catch(e){playing=false;$("disc").classList.remove("playing");hint(errText(e),true)}
+  $("disc").classList.remove("busy");
+}
+async function toggle(){
+  if(pos<0)return next();
+  if(!cur)return playCurrent();
+  const dev=LS.get("dev");const qs=dev?"?device_id="+encodeURIComponent(dev.id):"";
+  try{
+    if(playing){await api("/me/player/pause"+qs,{method:"PUT"});playing=false;$("disc").classList.remove("playing");hint("Pausiert. Tippen zum Weiterhören")}
+    else{await api("/me/player/play"+qs,{method:"PUT"});playing=true;$("disc").classList.add("playing");hint("Läuft. Tippen für Pause")}
+  }catch(e){hint(errText(e),true)}
+}
+function next(){
+  if(pos>=deck.length-1){buildDeck();hint("Alle Songs durch, neu gemischt.")}
+  pos++;cur=null;revealed=false;$("result").innerHTML="";$("reveal").disabled=false;
+  $("count").textContent=`Song ${pos+1} von ${deck.length}`;
+  playCurrent();
+}
+function reveal(){
+  if(pos<0||revealed)return;revealed=true;const s=deck[pos];
+  const alt=cur&&norm(cur.name)!==norm(s.t)?`<small>Gespielt: ${esc(cur.name)} · ${esc(cur.artist)}</small>`:"";
+  $("result").innerHTML=`<div class="card" style="background:${col(s.y)}"><span class="yr">${s.y}</span><span class="tt">${esc(s.t)}</span><span>${esc(s.a)}</span>${alt}</div>`;
+  $("reveal").disabled=true;
+}
+
+/* ---------- Ansicht ---------- */
+function show(view){["setup","settings","game"].forEach(v=>$(v).hidden=v!==view);if(view==="game")$("game").style.display="flex"}
+async function boot(){
+  if(!LS.get("cid"))LS.set("cid",DEFAULT_CID);$("redir").textContent=REDIRECT;$("cid").value=LS.get("cid","");
+  $("deck").value=LS.get("deck","hitster");$("startAt").value=LS.get("startAt","0");
+  await handleRedirect();
+  if(!LS.get("tok")){show("setup");return}
+  buildDeck();
+  if(!LS.get("dev")){show("settings");loadDevices()}else show("game");
+}
+$("login").onclick=login;
+$("gear").onclick=()=>{if(!LS.get("tok")){show("setup");return}show("settings");loadDevices()};
+$("refreshDevs").onclick=loadDevices;
+$("closeSettings").onclick=()=>{const d=$("deck").value;if(d!==LS.get("deck","hitster")){LS.set("deck",d);buildDeck()}LS.set("startAt",$("startAt").value);show("game")};
+$("logout").onclick=()=>{LS.del("tok");LS.del("dev");show("setup")};
+$("disc").onclick=toggle;$("next").onclick=next;$("reveal").onclick=reveal;
+boot();
+</script>
+</body>
+</html>

@@ -4,109 +4,279 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#15121c">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hitster">
+<meta name="theme-color" content="#0f0e0c">
 <title>Phils Hitster</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Figtree:wght@400;600;800&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23151310'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23332e28' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='11' fill='%23ff5a1f'/%3E%3Ccircle cx='32' cy='32' r='2.5' fill='%23151310'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Figtree:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap">
 <style>
-:root{--bg:#15121c;--panel:#211c2b;--line:#3a3247;--fg:#f3eee6;--muted:#a79fb4;--accent:#ff7a45;--gold:#ffc94a;--bad:#ff5a6a;--ok:#1ed760;
---display:"Dela Gothic One","Arial Black",Impact,sans-serif;--body:"Figtree",system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px}
-.wrap{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 28px);display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
-header{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px}
-h1{font-family:var(--display);font-weight:400;font-size:26px;margin:0}
-h1 span{color:var(--accent)}
-.icon{background:none;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:8px 12px;font:inherit;font-size:14px;cursor:pointer;flex:0 0 auto;max-width:none}
-.count{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
-.disc{position:relative;width:min(70vw,290px);aspect-ratio:1;border-radius:50%;border:0;padding:0;cursor:pointer;background:repeating-radial-gradient(circle,#2b2437 0 3px,#1c1725 3px 6px);box-shadow:0 0 0 2px var(--line),0 20px 60px #0008;color:var(--fg)}
-.label{position:absolute;inset:30%;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#1a0f08;font-family:var(--display);font-size:clamp(34px,11vw,54px)}
-.disc.playing .label{animation:spin 3s linear infinite}
-.disc.busy .label{opacity:.5}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.disc.playing .label{animation:none}}
-.hint{color:var(--muted);margin:-6px 0 0;min-height:1.3em}
-.hint.err{color:var(--bad)}
-.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%}
-button{font:inherit;font-weight:800;cursor:pointer;border-radius:999px;padding:14px 20px;border:1px solid var(--line);background:var(--panel);color:var(--fg);flex:1 1 140px;max-width:240px}
-button.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-button.spot{background:var(--ok);color:#08130c;border-color:var(--ok)}
-button:disabled{opacity:.4;cursor:not-allowed}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
-.card{width:100%;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:6px;color:#140f1a;animation:pop .35s ease-out}
-@keyframes pop{from{transform:scale(.9) rotate(-3deg);opacity:.4}to{transform:none;opacity:1}}
-.card .yr{font-family:var(--display);font-size:56px;line-height:1}
-.card .tt{font-weight:800;font-size:20px}
-.card small{opacity:.7}
-.panel{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;text-align:left}
-.panel h2{font-family:var(--display);font-weight:400;font-size:18px;margin:0}
-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-input,select{font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
-code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:block;word-break:break-all;font-size:13px}
-.small{font-size:13px;color:var(--muted);line-height:1.45}
-.devs{display:flex;flex-direction:column;gap:8px}
-.dev{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-weight:600;max-width:none;text-align:left}
-.dev.on{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+/* Konzept: Plattenspieler im Club-Look. Oben die Punktetafel, in der Mitte das Deck mit Tonarm,
+   unten eine feste Daumenleiste. Die Songkarte fährt beim Aufdecken wie eine Plattenhülle hoch.
+   Bewusst nur ein dunkles Erscheinungsbild. */
+:root{
+  --ink:#0f0e0c; --plinth:#1a1815; --plinth2:#221f1b; --line:#332e28; --bone:#f1ebe0; --muted:#9a9187;
+  --signal:#ff5a1f; --spot:#1ed760; --bad:#ff6b6b;
+  --d70:#e9b949; --d80:#ff5c8a; --d90:#4dd4c6; --d00:#9d8cff; --d10:#ff8a3d; --d20:#c6f24e;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Space Mono",ui-monospace,Menlo,monospace;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--ink);color:var(--bone);font-family:var(--body);font-size:16px}
+body{overscroll-behavior:none;overflow-x:hidden}
+.app{overflow-x:clip}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--signal);outline-offset:3px}
+button:active:not(:disabled){transform:scale(.96)}
+button:disabled{opacity:.35;cursor:default}
 [hidden]{display:none!important}
-.players{width:100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.pl{display:flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--panel);overflow:hidden;flex:0 0 auto;max-width:none;padding:0}
-.pl.turn{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-.pl .nm{padding:9px 6px 9px 14px;font-weight:700;font-size:15px}
-.pl .sc{font-family:var(--display);color:var(--accent);padding:9px 12px 9px 4px;font-size:16px;font-variant-numeric:tabular-nums}
-.pl button{border:0;border-left:1px solid var(--line);border-radius:0;background:none;color:var(--fg);padding:9px 13px;font-size:17px;flex:0 0 auto;max-width:none;line-height:1}
-.addpl{border:1px dashed var(--line);background:none;color:var(--muted);border-radius:999px;padding:9px 14px;font-size:14px;flex:0 0 auto;max-width:none}
-.turninfo{color:var(--muted);font-size:14px;margin:-8px 0 0}
-.turninfo b{color:var(--fg)}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.07;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- App-Rahmen ---------- */
+.app{position:relative;z-index:1;height:100dvh;max-width:560px;margin:0 auto;display:flex;flex-direction:column;
+  padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 108px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px}
+.wordmark{font-family:var(--display);font-weight:900;font-size:30px;letter-spacing:.02em;line-height:.9;text-transform:uppercase;margin:0}
+.wordmark span{color:var(--signal)}
+.iconbtns{display:flex;gap:8px}
+.ibtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--plinth);border:1px solid var(--line)}
+.ibtn svg{width:20px;height:20px}
+
+/* ---------- Punktetafel ---------- */
+.board{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-inline:16px;margin:10px -16px 0;padding:2px 16px 6px;scrollbar-width:none}
+.board::-webkit-scrollbar{display:none}
+.tile{flex:0 0 auto;scroll-snap-align:start;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:10px;
+  min-width:128px;padding:10px 8px 8px 12px;border-radius:16px;background:var(--plinth);border:1px solid var(--line)}
+.tile .nm{grid-column:1/3;font-weight:700;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.tile .sc{font-family:var(--mono);font-weight:700;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums;align-self:end}
+.tile .sc.neg{color:var(--bad)}
+.tile .sc.bump{animation:bump .3s ease-out}
+@keyframes bump{40%{transform:scale(1.25)}}
+.tile .pm{display:flex;gap:6px;align-self:end}
+.tile .pm button{width:40px;height:40px;border-radius:12px;font-size:22px;font-weight:800;line-height:1;background:var(--plinth2);border:1px solid var(--line)}
+.tile .pm button.plus{background:var(--bone);color:var(--ink);border-color:var(--bone)}
+.tile.add{place-content:center;min-width:112px;border-style:dashed;color:var(--muted);font-weight:700;font-size:14px;text-align:center;display:grid;grid-template-columns:1fr}
+
+/* ---------- Deck ---------- */
+.stage{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding-top:6px}
+.deck{position:relative;overflow:hidden;width:min(88vw,50dvh,440px);aspect-ratio:1/1;border-radius:26px;
+  background:linear-gradient(145deg,#26231f,#171512 60%);border:1px solid var(--line);
+  box-shadow:inset 0 1px 0 #ffffff12,0 30px 60px -20px #000c}
+.deck .no{position:absolute;left:14px;top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.deck .no b{color:var(--bone);font-weight:700}
+.deck .led{position:absolute;right:16px;top:16px;width:8px;height:8px;border-radius:50%;background:#3a352f;box-shadow:0 0 0 3px #0003}
+.deck.on .led{background:var(--spot);box-shadow:0 0 12px var(--spot)}
+.platter{position:absolute;left:8%;top:10%;width:76%;aspect-ratio:1/1;border-radius:50%;border:0;padding:0;
+  background:#0b0a09;box-shadow:0 0 0 6px #2b2723,0 0 0 7px #3a352f,0 14px 30px #000a}
+.vinyl{position:absolute;inset:3%;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 33%,#0000 33%),
+    conic-gradient(from 30deg,#ffffff00 0 12%,#ffffff14 16%,#ffffff00 22% 58%,#ffffff10 63%,#ffffff00 70%),
+    repeating-radial-gradient(circle at 50% 50%,#161412 0 1.5px,#0c0b0a 1.5px 3px);
+  animation:spin 1.8s linear infinite;animation-play-state:paused}
+.deck.on .vinyl{animation-play-state:running}
+@keyframes spin{to{transform:rotate(360deg)}}
+.label{position:absolute;inset:33%;border-radius:50%;background:var(--signal);display:grid;place-items:center;text-align:center;color:var(--ink);
+  box-shadow:inset 0 0 0 2px #0002;transition:background .4s}
+.label .q{font-family:var(--display);font-weight:900;font-size:clamp(34px,11vw,58px);line-height:1}
+.label .ly{font-family:var(--display);font-weight:900;font-size:clamp(26px,8vw,44px);line-height:1}
+.label.yr::after{display:none}
+.label::after{content:"";position:absolute;width:7%;height:7%;border-radius:50%;background:var(--ink);left:46.5%;top:46.5%}
+.deck.busy .label{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+.arm{position:absolute;right:4%;top:6%;width:30%;height:70%;pointer-events:none;transform-origin:72% 12%;transform:rotate(-13deg);transition:transform .7s cubic-bezier(.3,1.3,.5,1)}
+.deck.on .arm{transform:rotate(7deg)}
+.status{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:15px;line-height:1.35;max-width:36ch;padding:0 6px}
+.status.err{color:var(--bad)}
+.wake{display:inline-flex;align-items:center;gap:10px;background:var(--spot);color:#07140b;font-weight:800;border-radius:999px;padding:14px 22px;font-size:16px}
+
+/* ---------- Plattenhülle (Aufdecken) ---------- */
+.sleeve{position:absolute;left:0;right:0;bottom:0;border-radius:24px;padding:22px 20px 20px;color:var(--ink);
+  display:flex;flex-direction:column;gap:6px;box-shadow:0 -20px 50px #000b;animation:rise .45s cubic-bezier(.2,1.2,.4,1);overflow:hidden}
+.sleeve::before{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;
+  background:repeating-radial-gradient(circle,#0000 0 6px,#00000014 6px 7px)}
+@keyframes rise{from{transform:translateY(60%);opacity:0}to{transform:none;opacity:1}}
+.sleeve .dec{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;opacity:.7}
+.sleeve .yr{font-family:var(--display);font-weight:900;font-size:clamp(72px,24vw,112px);line-height:.82;letter-spacing:-.01em}
+.sleeve .tt{font-weight:800;font-size:22px;line-height:1.15;text-wrap:balance;margin-top:6px}
+.sleeve .ar{font-size:17px;font-weight:600}
+.sleeve small{font-size:12px;opacity:.7;margin-top:4px}
+.sleeve .close{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;background:#0000001f;font-size:18px;font-weight:800}
+
+/* ---------- Daumenleiste ---------- */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 16px calc(var(--safe-b) + 12px);
+  background:linear-gradient(to top,var(--ink) 60%,#0f0e0c00)}
+.dock .row{max-width:560px;margin:0 auto;display:grid;grid-template-columns:1fr 1.25fr;gap:10px}
+.big{height:64px;border-radius:20px;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px}
+.big.ghost{background:var(--plinth);border:1px solid var(--line)}
+.big.solid{background:var(--bone);color:var(--ink)}
+.big svg{width:20px;height:20px}
+
+/* ---------- Einstellungen (Bottom Sheet) ---------- */
+.scrim{position:fixed;inset:0;background:#000a;z-index:20;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:88dvh;overflow:auto;background:var(--plinth);border-top:1px solid var(--line);
+  border-radius:26px 26px 0 0;padding:10px 18px calc(var(--safe-b) + 22px);animation:up .3s cubic-bezier(.2,1,.4,1)}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet .inner{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 4px}
+.sheet h2{font-family:var(--display);font-weight:800;font-size:26px;text-transform:uppercase;letter-spacing:.02em;margin:0}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec h3{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:700}
+.small{font-size:14px;color:var(--muted);line-height:1.45;margin:0}
+input,select{font:inherit;font-size:16px;background:var(--ink);color:var(--bone);border:1px solid var(--line);border-radius:14px;padding:13px 14px;width:100%;min-width:0}
+.field{display:flex;gap:8px}
+.btn{height:50px;border-radius:14px;padding:0 18px;font-weight:800;background:var(--plinth2);border:1px solid var(--line);flex:0 0 auto}
+.btn.solid{background:var(--bone);color:var(--ink);border-color:var(--bone)}
+.btn.wide{width:100%}
 .pledit{display:flex;gap:8px}
-.pledit button{flex:0 0 auto;max-width:none;padding:10px 14px}
+.pledit button{width:50px;height:50px;border-radius:14px;background:var(--plinth2);border:1px solid var(--line);flex:0 0 auto;color:var(--bad);font-weight:800}
+.devs{display:flex;flex-direction:column;gap:8px}
+.dev{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--ink);text-align:left;font-weight:700}
+.dev.on{border-color:var(--spot);box-shadow:0 0 0 1px var(--spot) inset}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:4px}
+.seg button{height:44px;border-radius:10px;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button.on{background:var(--bone);color:var(--ink)}
+
+/* ---------- Anmeldung ---------- */
+.setup{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;padding-bottom:20px}
+.setup .hero{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:clamp(52px,15.5vw,104px);line-height:.84;margin:0;letter-spacing:-.005em}
+.setup .hero span{color:var(--signal)}
+.setup p{color:var(--muted);font-size:17px;line-height:1.5;margin:0;max-width:34ch}
+.spotbtn{height:64px;border-radius:20px;background:var(--spot);color:#07140b;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.steps{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;font-size:15px;color:var(--muted);margin:0;padding:0;list-style:none}
+.steps b{font-family:var(--mono);color:var(--signal)}
+details summary{color:var(--muted);font-size:14px;cursor:pointer}
+code{display:block;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-family:var(--mono);font-size:12px;word-break:break-all;margin-top:8px}
+.err{color:var(--bad)}
+
+@media (prefers-reduced-motion:reduce){
+  .vinyl{animation:none}.arm{transition:none}.sleeve,.sheet,.scrim,.tile .sc.bump,.deck.busy .label{animation:none}
+}
+@media (max-height:680px){
+  .deck{width:min(80vw,44dvh)} .wordmark{font-size:26px} .big{height:58px} .tile .sc{font-size:26px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header><h1>Phils <span>Hitster</span></h1><button class="icon" id="gear" aria-label="Einstellungen">⚙ Einstellungen</button></header>
-
-  <!-- Setup -->
-  <section class="panel" id="setup" hidden>
-    <h2>Mit Spotify verbinden</h2>
-    <p class="small">Einmal pro Handy. Danach spielt Spotify die Songs verdeckt ab.</p>
-    <details><summary class="small">Technische Angaben</summary><div><label for="cid">Spotify Client-ID</label><input id="cid" autocomplete="off" spellcheck="false" placeholder="z. B. 3f9a…"></div>
-    <div><label>Redirect-URI für die Spotify-App</label><code id="redir"></code></div>
-    <p class="small">Diese Adresse genau so in deiner Spotify-Entwickler-App unter „Redirect URIs“ eintragen.</p></details>
-    <button class="spot" id="login">Mit Spotify verbinden</button>
-    <p class="hint err" id="setupErr"></p>
-  </section>
-
-  <!-- Settings -->
-  <section class="panel" id="settings" hidden>
-    <h2>Abspielgerät</h2>
-    <p class="small">Öffne die Spotify-App auf dem Gerät, auf dem die Musik laufen soll (Handy, Box, PC). Dann hier aktualisieren und antippen.</p>
-    <div class="devs" id="devs"></div>
-    <button id="refreshDevs">Geräte aktualisieren</button>
-    <h2>Spieler</h2>
-    <p class="small">Im Spiel: + gibt einen Punkt, − zieht einen ab (auch ins Minus).</p>
-    <div id="pllist" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="pledit"><input id="newpl" placeholder="Name" autocomplete="off"><button id="addplBtn">Hinzufügen</button></div>
-    <button id="resetScores">Punkte auf 0 setzen</button>
-    <h2>Songs</h2>
-    <p class="small">558 Songs von 1970 bis heute, zufällig gemischt.</p>
-    <div><label for="startAt">Start im Song</label>
-    <select id="startAt"><option value="0">Von Anfang an</option><option value="30">Nach 30 Sekunden</option><option value="rand">Zufällige Stelle</option></select></div>
-    <button class="primary" id="closeSettings">Fertig</button>
-    <button id="logout">Spotify trennen</button>
-  </section>
-
-  <!-- Game -->
-  <section id="game" hidden style="width:100%;display:flex;flex-direction:column;align-items:center;gap:20px">
-    <div class="players" id="players"></div>
-    <div style="display:flex;align-items:center;justify-content:center;gap:12px"><button class="icon" id="back" disabled aria-label="Einen Song zurück">← Zurück</button><span class="count" id="count"></span></div>
-    <button class="disc" id="disc" aria-label="Abspielen oder Pause"><span class="label" id="lbl">?</span></button>
-    <p class="hint" id="hint">Tippe auf die Platte</p>
-    <button class="spot" id="wake" hidden>Spotify aufwecken</button>
-    <div class="btns">
-      <button id="reveal" disabled>Aufdecken</button>
-      <button class="primary" id="next">Nächster Song</button>
+<div class="grain" aria-hidden="true"></div>
+<div class="app">
+  <header class="top">
+    <h1 class="wordmark">Phils <span>Hitster</span></h1>
+    <div class="iconbtns">
+      <button class="ibtn" id="back" disabled aria-label="Einen Song zurück">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+      </button>
+      <button class="ibtn" id="gear" aria-label="Einstellungen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+      </button>
     </div>
-    <div id="result" style="width:100%"></div>
+  </header>
+
+  <!-- Anmeldung -->
+  <section class="setup" id="setup" hidden>
+    <h2 class="hero">Hör&nbsp;rein.<br>Rate&nbsp;<span>mit.</span></h2>
+    <p>Der Song läuft verdeckt über dein Spotify. Wer zuerst Titel und Interpret weiß, bekommt den Punkt.</p>
+    <ul class="steps">
+      <li><b>01</b></li><li>Spotify-App öffnen und kurz irgendeinen Song anspielen</li>
+      <li><b>02</b></li><li>Unten verbinden und bei Spotify zustimmen</li>
+      <li><b>03</b></li><li>Auf die Platte tippen, los geht's</li>
+    </ul>
+    <button class="spotbtn" id="login">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#07140b"/><path d="M6.5 9.3c3.8-1.1 8-.8 11 1M7.2 12.4c3.1-.9 6.5-.6 9 .9M7.8 15.3c2.5-.6 5-.4 7 .7" stroke="#1ed760" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
+      Mit Spotify verbinden
+    </button>
+    <p class="err" id="setupErr"></p>
+    <details><summary>Technische Angaben</summary>
+      <label class="small" for="cid">Spotify Client-ID</label>
+      <input id="cid" autocomplete="off" spellcheck="false" style="margin-top:6px">
+      <code id="redir"></code>
+    </details>
   </section>
+
+  <!-- Spiel -->
+  <section id="game" hidden style="flex:1;min-height:0;display:flex;flex-direction:column">
+    <div class="board" id="players" aria-label="Punktestand"></div>
+    <div class="stage">
+      <div class="deck" id="deck">
+        <span class="no" id="count"></span>
+        <span class="led" aria-hidden="true"></span>
+        <button class="platter" id="disc" aria-label="Abspielen oder Pause">
+          <span class="vinyl"></span>
+          <span class="label" id="lbl"><span class="q">?</span></span>
+        </button>
+        <svg class="arm" viewBox="0 0 100 230" aria-hidden="true">
+          <circle cx="72" cy="28" r="20" fill="#2e2a25" stroke="#48413a" stroke-width="2"/>
+          <circle cx="72" cy="28" r="9" fill="#12100e"/>
+          <path d="M72 28 L66 170 L44 205" fill="none" stroke="#cfc8bc" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="30" y="198" width="26" height="18" rx="4" transform="rotate(-38 43 207)" fill="#f1ebe0"/>
+          <rect x="80" y="4" width="16" height="22" rx="4" fill="#48413a"/>
+        </svg>
+      </div>
+      <p class="status" id="hint" aria-live="polite">Tippe auf die Platte</p>
+      <button class="wake" id="wake" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg>
+        Spotify aufwecken
+      </button>
+      <div id="result"></div>
+    </div>
+  </section>
+</div>
+
+<nav class="dock" id="dock" hidden>
+  <div class="row">
+    <button class="big ghost" id="reveal" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+      Aufdecken
+    </button>
+    <button class="big solid" id="next">
+      Nächster Song
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+</nav>
+
+<div id="settings" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="inner">
+      <div class="grab"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><h2 id="sheetTitle">Einstellungen</h2><button class="btn solid" id="closeSettings">Fertig</button></div>
+      <div class="sec">
+        <h3>Spieler</h3>
+        <div id="pllist" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="field"><input id="newpl" placeholder="Name eingeben" autocomplete="off" enterkeyhint="done"><button class="btn solid" id="addplBtn">Hinzufügen</button></div>
+        <button class="btn wide" id="resetScores">Punkte auf 0 setzen</button>
+      </div>
+      <div class="sec">
+        <h3>Start im Song</h3>
+        <div class="seg" id="startSeg">
+          <button data-v="0">Anfang</button><button data-v="30">Ab 0:30</button><button data-v="rand">Zufällig</button>
+        </div>
+        <select id="startAt" hidden><option value="0"></option><option value="30"></option><option value="rand"></option></select>
+      </div>
+      <div class="sec">
+        <h3>Abspielgerät</h3>
+        <p class="small">Wird normalerweise automatisch gefunden. Hier kannst du es festlegen, zum Beispiel eine Box oder deinen PC.</p>
+        <div class="devs" id="devs"></div>
+        <button class="btn wide" id="refreshDevs">Geräte aktualisieren</button>
+      </div>
+      <div class="sec">
+        <h3>Songs</h3>
+        <p class="small">558 Songs von 1970 bis heute, bei jedem Start neu gemischt.</p>
+      </div>
+      <div class="sec">
+        <h3>Konto</h3>
+        <button class="btn wide" id="logout">Spotify trennen</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -117,13 +287,15 @@ const REDIRECT=location.origin+location.pathname;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LS={get(k,d=null){try{const v=localStorage.getItem("ph_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("ph_"+k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem("ph_"+k)}catch(e){}}};
-const DEC={1950:"#9fb4ff",1960:"#8fd3ff",1970:"#7fe3c9",1980:"#b7ec7a",1990:"#ffe26a",2000:"#ffb35c",2010:"#ff8f7a",2020:"#ff8fc7"};
-const col=y=>DEC[Math.floor(y/10)*10]||"#c9c3d6";
+const DEC={1970:"--d70",1980:"--d80",1990:"--d90",2000:"--d00",2010:"--d10",2020:"--d20"};
+const col=y=>`var(${DEC[Math.floor(y/10)*10]||"--d70"})`;
+const decName=y=>{const d=Math.floor(y/10)*10;return (d>=2000?"20":"")+String(d).slice(-2)+"er"};
+const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}};
 
 /* ---------- Auth (PKCE, kein Secret nötig) ---------- */
 const b64url=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 async function login(){
-  const cid=$("cid").value.trim();if(!cid){$("setupErr").textContent="Bitte zuerst die Client-ID eintragen.";return}
+  const cid=$("cid").value.trim()||DEFAULT_CID;
   LS.set("cid",cid);
   const verifier=b64url(crypto.getRandomValues(new Uint8Array(64)));
   const challenge=b64url(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier)));
@@ -166,17 +338,25 @@ async function loadDevices(){
   const box=$("devs");box.innerHTML='<p class="small">Suche Geräte …</p>';
   try{
     const j=await api("/me/player/devices");const sel=LS.get("dev");
-    if(!j.devices.length){box.innerHTML='<p class="small">Kein Gerät gefunden. Spotify-App öffnen, kurz irgendeinen Song starten, dann aktualisieren.</p>';return}
+    if(!j||!j.devices.length){box.innerHTML='<p class="small">Kein Gerät gefunden. Spotify-App öffnen, dann aktualisieren.</p>';return}
     box.innerHTML="";
     j.devices.forEach(d=>{const b=document.createElement("button");b.className="dev"+(sel&&sel.id===d.id?" on":"");b.innerHTML=`<span>${esc(d.name)}</span><span class="small">${esc(d.type)}${d.is_active?" · aktiv":""}</span>`;b.onclick=()=>{LS.set("dev",{id:d.id,name:d.name});loadDevices()};box.appendChild(b)});
   }catch(e){box.innerHTML=`<p class="small">Geräte konnten nicht geladen werden (${esc(e.msg||e.code)}).</p>`}
 }
+async function pickDevice(){
+  const saved=LS.get("dev");const j=await api("/me/player/devices");const ds=(j&&j.devices)||[];
+  const d=ds.find(x=>saved&&x.id===saved.id)||ds.find(x=>saved&&x.name===saved.name)||ds.find(x=>x.is_active)||(ds.length===1?ds[0]:null)||ds.find(x=>x.type==="Smartphone");
+  if(d)LS.set("dev",{id:d.id,name:d.name});
+  return d||null;
+}
 
 /* ---------- Spiel ---------- */
-let deck=[],pos=-1,cur=null,playing=false,revealed=false,started=false;
+let deck=[],pos=-1,cur=null,playing=false,revealed=false,started=false,wantPlay=false;
+const pad=n=>String(n).padStart(3,"0");
+function setCount(){$("count").innerHTML=pos<0?`<b>${deck.length}</b> Songs im Stapel`:`No. <b>${pad(pos+1)}</b> / ${deck.length}`}
 function buildDeck(){
   deck=SONGS.slice();for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}
-  pos=-1;$("count").textContent=deck.length+" Songs im Stapel";
+  pos=-1;setCount();
 }
 const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\(.*?\)|\[.*?\]|feat\..*$| - .*$/g,"").replace(/[^a-z0-9]+/g," ").trim();
 async function resolve(s){
@@ -193,121 +373,123 @@ async function resolve(s){
   }
   throw {code:"notfound"};
 }
-function hint(t,err){$("hint").textContent=t;$("hint").className="hint"+(err?" err":"")}
+function hint(t,err){$("hint").textContent=t;$("hint").className="status"+(err?" err":"")}
+function setPlaying(on){playing=on;$("deck").classList.toggle("on",on)}
+function busy(on){$("deck").classList.toggle("busy",on)}
+const SLEEP="Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm danach hierher zurück.";
 function errText(e){
   if(e.code==="auth")return "Nicht mit Spotify verbunden.";
-  if(e.code==="notfound")return "Song bei Spotify nicht gefunden, weiter mit Nächster Song.";
-  if(e.code===404||e.reason==="NO_ACTIVE_DEVICE")return "Kein aktives Gerät. Spotify-App öffnen und unter ⚙ ein Gerät wählen.";
-  if(e.code===403)return "Spotify erlaubt das nicht ("+(e.reason||e.msg)+"). Premium und Nutzerliste der Entwickler-App prüfen.";
+  if(e.code==="notfound")return "Diesen Song gibt es bei Spotify nicht. Weiter zum nächsten.";
+  if(e.code===403)return "Spotify erlaubt das nicht ("+(e.reason||e.msg)+"). Premium und Freischaltung prüfen.";
   if(e.code===429)return "Zu viele Anfragen, kurz warten.";
   return "Fehler: "+(e.msg||e.code||e);
 }
-/* Gerät automatisch finden: gleiche ID, sonst gleicher Name, sonst aktives Gerät, sonst das einzige */
-async function pickDevice(){
-  const saved=LS.get("dev");const j=await api("/me/player/devices");const ds=(j&&j.devices)||[];
-  const d=ds.find(x=>saved&&x.id===saved.id)||ds.find(x=>saved&&x.name===saved.name)||ds.find(x=>x.is_active)||(ds.length===1?ds[0]:null)||ds.find(x=>x.type==="Smartphone");
-  if(d)LS.set("dev",{id:d.id,name:d.name});
-  return d||null;
-}
-let wantPlay=false;
 function showWake(on){$("wake").hidden=!on}
+function resetLabel(){$("lbl").style.background="";$("lbl").classList.remove("yr");$("lbl").innerHTML='<span class="q">?</span>'}
 async function playCurrent(){
-  const s=deck[pos];$("disc").classList.add("busy");hint("Lade …");
+  const s=deck[pos];busy(true);hint("Lade …");
   try{
     cur=await resolve(s);
     const dev=await pickDevice();
-    if(!dev){wantPlay=true;showWake(true);hint("Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm dann hierher zurück.",true);$("disc").classList.remove("busy");return}
+    if(!dev){wantPlay=true;showWake(true);hint(SLEEP,true);busy(false);return}
     const st=LS.get("startAt","0");
     let ms=0;if(st==="30")ms=30000;else if(st==="rand"&&cur.dur)ms=Math.floor(Math.random()*Math.max(0,cur.dur-60000));
-    await api("/me/player/play"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT",body:JSON.stringify({uris:[cur.uri],position_ms:ms})});
-    wantPlay=false;showWake(false);started=true;playing=true;$("disc").classList.add("playing");hint("Läuft auf "+(dev?dev.name:"Spotify")+". Tippen für Pause");
-  }catch(e){playing=false;$("disc").classList.remove("playing");
-    if(e.code===404||e.reason==="NO_ACTIVE_DEVICE"){wantPlay=true;showWake(true);hint("Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm dann hierher zurück.",true)}
+    await api("/me/player/play?device_id="+encodeURIComponent(dev.id),{method:"PUT",body:JSON.stringify({uris:[cur.uri],position_ms:ms})});
+    wantPlay=false;showWake(false);started=true;setPlaying(true);hint("Läuft auf "+dev.name+". Tippen für Pause");
+  }catch(e){setPlaying(false);
+    if(e.code===404||e.reason==="NO_ACTIVE_DEVICE"){wantPlay=true;showWake(true);hint(SLEEP,true)}
     else hint(errText(e),true)}
-  $("disc").classList.remove("busy");
+  busy(false);
 }
 async function toggle(){
+  buzz();
   if(pos<0)return next(true);
   if(!started)return playCurrent();
   let dev=LS.get("dev");
   try{
     if(!playing)dev=await pickDevice()||dev;
     const qs=dev?"?device_id="+encodeURIComponent(dev.id):"";
-    if(playing){await api("/me/player/pause"+qs,{method:"PUT"});playing=false;$("disc").classList.remove("playing");hint("Pausiert. Tippen zum Weiterhören")}
-    else{await api("/me/player/play"+qs,{method:"PUT"});playing=true;$("disc").classList.add("playing");hint("Läuft. Tippen für Pause")}
-  }catch(e){if(e.code===404){wantPlay=true;showWake(true);hint("Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm dann hierher zurück.",true)}else hint(errText(e),true)}
+    if(playing){await api("/me/player/pause"+qs,{method:"PUT"});setPlaying(false);hint("Pausiert. Tippen zum Weiterhören")}
+    else{await api("/me/player/play"+qs,{method:"PUT"});setPlaying(true);hint("Läuft. Tippen für Pause")}
+  }catch(e){if(e.code===404){wantPlay=true;showWake(true);hint(SLEEP,true)}else hint(errText(e),true)}
 }
+async function pauseIfPlaying(){
+  if(!playing)return;const dev=LS.get("dev");
+  try{await api("/me/player/pause"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT"})}catch(e){}
+}
+function clearReveal(){revealed=false;$("result").innerHTML="";$("reveal").disabled=false;resetLabel()}
 async function next(autoplay){
-  const wasPlaying=playing;playing=false;$("disc").classList.remove("playing");
-  if(wasPlaying){const dev=LS.get("dev");try{await api("/me/player/pause"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT"})}catch(e){}}
+  buzz();
+  await pauseIfPlaying();setPlaying(false);
   let msg="Tippe auf die Platte zum Abspielen";
   if(pos>=deck.length-1){buildDeck();msg="Alle Songs durch, neu gemischt. Tippe auf die Platte"}
-  const first=pos<0;
-  pos++;cur=null;revealed=false;$("result").innerHTML="";$("reveal").disabled=false;
-    renderPlayers();
-  $("count").textContent=`Song ${pos+1} von ${deck.length}`;$("back").disabled=pos<=0;
-  started=false;resolve(deck[pos]).catch(()=>{});
+  pos++;cur=null;started=false;clearReveal();showWake(false);wantPlay=false;
+  setCount();$("back").disabled=pos<=0;
+  resolve(deck[pos]).catch(()=>{});
   if(autoplay)playCurrent();else hint(msg);
 }
 async function back(){
-  if(pos<=0)return;
-  if(playing){const dev=LS.get("dev");try{await api("/me/player/pause"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT"})}catch(e){}}
-  playing=false;started=false;cur=null;revealed=false;$("disc").classList.remove("playing");
-  pos--;$("result").innerHTML="";$("reveal").disabled=false;
-  $("count").textContent=`Song ${pos+1} von ${deck.length}`;$("back").disabled=pos<=0;
+  if(pos<=0)return;buzz();
+  await pauseIfPlaying();setPlaying(false);
+  started=false;cur=null;pos--;clearReveal();
+  setCount();$("back").disabled=pos<=0;
   hint("Vorheriger Song. Tippe auf die Platte zum Abspielen");
 }
 function reveal(){
-  if(pos<0||revealed)return;revealed=true;const s=deck[pos];
+  if(pos<0||revealed)return;revealed=true;buzz();const s=deck[pos];
   const alt=cur&&norm(cur.name)!==norm(s.t)?`<small>Gespielt: ${esc(cur.name)} · ${esc(cur.artist)}</small>`:"";
-  $("result").innerHTML=`<div class="card" style="background:${col(s.y)}"><span class="yr">${s.y}</span><span class="tt">${esc(s.t)}</span><span>${esc(s.a)}</span>${alt}</div>`;
+  $("result").innerHTML=`<div class="sleeve" style="background:${col(s.y)}"><button class="close" aria-label="Karte ausblenden">✕</button><span class="dec">${decName(s.y)}</span><span class="yr">${s.y}</span><span class="tt">${esc(s.t)}</span><span class="ar">${esc(s.a)}</span>${alt}</div>`;
+  $("result").querySelector(".close").onclick=()=>{$("result").innerHTML=""};
+  $("lbl").style.background=col(s.y);$("lbl").classList.add("yr");$("lbl").innerHTML=`<span class="ly">${String(s.y).slice(-2)}</span>`;
   $("reveal").disabled=true;
 }
 
 /* ---------- Spieler ---------- */
-let players=LS.get("players",[]),turn=LS.get("turn",0);
-function savePl(){LS.set("players",players);LS.set("turn",turn)}
-function renderPlayers(){
+let players=LS.get("players",[]);
+function savePl(){LS.set("players",players)}
+function renderPlayers(bumpIdx){
   const box=$("players");box.innerHTML="";
   players.forEach((p,i)=>{
-    const d=document.createElement("div");d.className="pl";
-    d.innerHTML=`<span class="nm">${esc(p.n)}</span><span class="sc">${p.s}</span>`;
-    const m=document.createElement("button");m.textContent="−";m.setAttribute("aria-label","Punkt abziehen "+p.n);
-    m.onclick=()=>{p.s--;savePl();renderPlayers()};
-    const pl=document.createElement("button");pl.textContent="+";pl.setAttribute("aria-label","Punkt für "+p.n);
-    pl.onclick=()=>{p.s++;savePl();renderPlayers()};
-    d.appendChild(m);d.appendChild(pl);box.appendChild(d);
+    const d=document.createElement("div");d.className="tile";
+    d.innerHTML=`<span class="nm">${esc(p.n)}</span><span class="sc${p.s<0?" neg":""}${i===bumpIdx?" bump":""}">${p.s}</span><span class="pm"><button aria-label="Punkt abziehen ${esc(p.n)}">−</button><button class="plus" aria-label="Punkt für ${esc(p.n)}">+</button></span>`;
+    const [m,pl]=d.querySelectorAll("button");
+    m.onclick=()=>{p.s--;buzz();savePl();renderPlayers(i)};
+    pl.onclick=()=>{p.s++;buzz();savePl();renderPlayers(i)};
+    box.appendChild(d);
   });
-  const a=document.createElement("button");a.className="addpl";a.textContent="+ Spieler";
-  a.onclick=()=>{const n=(window.prompt("Name des Spielers?")||"").trim();if(n){players.push({n,s:0});savePl();renderPlayers()}};
+  const a=document.createElement("button");a.className="tile add";a.textContent=players.length?"+ Spieler":"+ Spieler hinzufügen";
+  a.onclick=()=>{openSettings();setTimeout(()=>$("newpl").focus(),250)};
   box.appendChild(a);
   const list=$("pllist");list.innerHTML="";
-  players.forEach((p,i)=>{const r=document.createElement("div");r.className="pledit";r.innerHTML=`<input value="${esc(p.n)}" aria-label="Name"><button aria-label="Entfernen">✕</button>`;
+  players.forEach((p,i)=>{const r=document.createElement("div");r.className="pledit";r.innerHTML=`<input value="${esc(p.n)}" aria-label="Name von Spieler ${i+1}"><button aria-label="Spieler entfernen">✕</button>`;
     r.querySelector("input").onchange=e=>{p.n=e.target.value.trim()||p.n;savePl();renderPlayers()};
-    r.querySelector("button").onclick=()=>{players.splice(i,1);if(turn>=players.length)turn=0;savePl();renderPlayers()};list.appendChild(r)});
-  if(!players.length)list.innerHTML='<p class="small">Noch keine Spieler.</p>';
+    r.querySelector("button").onclick=()=>{players.splice(i,1);savePl();renderPlayers()};list.appendChild(r)});
+  if(!players.length)list.innerHTML='<p class="small">Noch keine Spieler. Namen eingeben und hinzufügen.</p>';
 }
-$("addplBtn").onclick=()=>{const n=$("newpl").value.trim();if(!n)return;players.push({n,s:0});$("newpl").value="";savePl();renderPlayers()};
+$("addplBtn").onclick=()=>{const n=$("newpl").value.trim();if(!n)return;players.push({n,s:0});$("newpl").value="";savePl();renderPlayers();$("newpl").focus()};
 $("newpl").onkeydown=e=>{if(e.key==="Enter")$("addplBtn").click()};
 $("resetScores").onclick=()=>{players.forEach(p=>p.s=0);savePl();renderPlayers()};
 
 /* ---------- Ansicht ---------- */
-function show(view){["setup","settings","game"].forEach(v=>$(v).hidden=v!==view);if(view==="game")$("game").style.display="flex"}
+function show(view){$("setup").hidden=view!=="setup";$("game").hidden=view!=="game";$("dock").hidden=view!=="game";$("back").hidden=view!=="game"}
+function syncSeg(){const v=LS.get("startAt","0");$("startSeg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===v))}
+function openSettings(){if(!LS.get("tok")){show("setup");return}$("settings").hidden=false;syncSeg();loadDevices()}
+function closeSettings(){$("settings").hidden=true}
 async function boot(){
-  if(!LS.get("cid"))LS.set("cid",DEFAULT_CID);$("redir").textContent=REDIRECT;$("cid").value=LS.get("cid","");
-  $("startAt").value=LS.get("startAt","0");
+  if(!LS.get("cid"))LS.set("cid",DEFAULT_CID);$("redir").textContent="Redirect-URI: "+REDIRECT;$("cid").value=LS.get("cid","");
   await handleRedirect();
   if(!LS.get("tok")){show("setup");return}
-  buildDeck();renderPlayers();
-  if(!LS.get("dev")){show("settings");loadDevices()}else show("game");
+  buildDeck();renderPlayers();show("game");
 }
 $("login").onclick=login;
-$("gear").onclick=()=>{if(!LS.get("tok")){show("setup");return}show("settings");loadDevices()};
+$("gear").onclick=openSettings;
+$("closeSettings").onclick=closeSettings;$("scrim").onclick=closeSettings;
 $("refreshDevs").onclick=loadDevices;
-$("closeSettings").onclick=()=>{LS.set("startAt",$("startAt").value);show("game")};
-$("logout").onclick=()=>{LS.del("tok");LS.del("dev");show("setup")};
+$("startSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{LS.set("startAt",b.dataset.v);syncSeg()});
+$("logout").onclick=()=>{LS.del("tok");LS.del("dev");closeSettings();show("setup")};
 $("wake").onclick=()=>{location.href="spotify:"};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&wantPlay&&pos>=0){setTimeout(()=>{if(!started)playCurrent();else toggle()},800)}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSettings()});
 $("disc").onclick=toggle;$("back").onclick=back;$("next").onclick=()=>next(false);$("reveal").onclick=reveal;
 boot();
 </script>

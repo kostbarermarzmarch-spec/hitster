@@ -107,7 +107,7 @@ button:disabled{opacity:.35;cursor:default}
 .sleeve .tt{font-weight:800;font-size:22px;line-height:1.15;text-wrap:balance;margin-top:6px}
 .sleeve .ar{font-size:17px;font-weight:600}
 .sleeve small{font-size:12px;opacity:.7;margin-top:4px}
-.sleeve .close{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;background:#0000001f;font-size:18px;font-weight:800}
+.sleeve .close{position:absolute;z-index:2;right:12px;top:12px;width:36px;height:36px;border-radius:50%;background:#0000001f;font-size:18px;font-weight:800}
 
 /* ---------- Daumenleiste ---------- */
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 16px calc(var(--safe-b) + 12px);
@@ -233,7 +233,7 @@ code{display:block;background:var(--ink);border:1px solid var(--line);border-rad
   <div class="row">
     <button class="big ghost" id="reveal" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-      Aufdecken
+      <span id="revealTxt">Aufdecken</span>
     </button>
     <button class="big solid" id="next">
       Nächster Song
@@ -417,7 +417,9 @@ async function pauseIfPlaying(){
   if(!playing)return;const dev=LS.get("dev");
   try{await api("/me/player/pause"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT"})}catch(e){}
 }
-function clearReveal(){revealed=false;$("result").innerHTML="";$("reveal").disabled=false;resetLabel()}
+function setRevealBtn(open){$("revealTxt").textContent=open?"Verdecken":"Aufdecken"}
+function hideCard(){$("result").innerHTML="";setRevealBtn(false)}
+function clearReveal(){revealed=false;hideCard();resetLabel();$("reveal").disabled=false}
 async function next(autoplay){
   buzz();
   await pauseIfPlaying();setPlaying(false);
@@ -436,12 +438,14 @@ async function back(){
   hint("Vorheriger Song. Tippe auf die Platte zum Abspielen");
 }
 function reveal(){
-  if(pos<0||revealed)return;revealed=true;buzz();const s=deck[pos];
+  if(pos<0)return;buzz();
+  if($("result").innerHTML){hideCard();return}
+  revealed=true;const s=deck[pos];
   const alt=cur&&norm(cur.name)!==norm(s.t)?`<small>Gespielt: ${esc(cur.name)} · ${esc(cur.artist)}</small>`:"";
   $("result").innerHTML=`<div class="sleeve" style="background:${col(s.y)}"><button class="close" aria-label="Karte ausblenden">✕</button><span class="dec">${decName(s.y)}</span><span class="yr">${s.y}</span><span class="tt">${esc(s.t)}</span><span class="ar">${esc(s.a)}</span>${alt}</div>`;
-  $("result").querySelector(".close").onclick=()=>{$("result").innerHTML=""};
+  $("result").querySelector(".close").onclick=hideCard;
   $("lbl").style.background=col(s.y);$("lbl").classList.add("yr");$("lbl").innerHTML=`<span class="ly">${String(s.y).slice(-2)}</span>`;
-  $("reveal").disabled=true;
+  setRevealBtn(true);
 }
 
 /* ---------- Spieler ---------- */

@@ -100,6 +100,7 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding
     <div style="display:flex;align-items:center;justify-content:center;gap:12px"><button class="icon" id="back" disabled aria-label="Einen Song zurück">← Zurück</button><span class="count" id="count"></span></div>
     <button class="disc" id="disc" aria-label="Abspielen oder Pause"><span class="label" id="lbl">?</span></button>
     <p class="hint" id="hint">Tippe auf die Platte</p>
+    <button class="spot" id="wake" hidden>Spotify aufwecken</button>
     <div class="btns">
       <button id="reveal" disabled>Aufdecken</button>
       <button class="primary" id="next">Nächster Song</button>
@@ -201,25 +202,40 @@ function errText(e){
   if(e.code===429)return "Zu viele Anfragen, kurz warten.";
   return "Fehler: "+(e.msg||e.code||e);
 }
+/* Gerät automatisch finden: gleiche ID, sonst gleicher Name, sonst aktives Gerät, sonst das einzige */
+async function pickDevice(){
+  const saved=LS.get("dev");const j=await api("/me/player/devices");const ds=(j&&j.devices)||[];
+  const d=ds.find(x=>saved&&x.id===saved.id)||ds.find(x=>saved&&x.name===saved.name)||ds.find(x=>x.is_active)||(ds.length===1?ds[0]:null)||ds.find(x=>x.type==="Smartphone");
+  if(d)LS.set("dev",{id:d.id,name:d.name});
+  return d||null;
+}
+let wantPlay=false;
+function showWake(on){$("wake").hidden=!on}
 async function playCurrent(){
   const s=deck[pos];$("disc").classList.add("busy");hint("Lade …");
   try{
     cur=await resolve(s);
-    const dev=LS.get("dev");const st=LS.get("startAt","0");
+    const dev=await pickDevice();
+    if(!dev){wantPlay=true;showWake(true);hint("Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm dann hierher zurück.",true);$("disc").classList.remove("busy");return}
+    const st=LS.get("startAt","0");
     let ms=0;if(st==="30")ms=30000;else if(st==="rand"&&cur.dur)ms=Math.floor(Math.random()*Math.max(0,cur.dur-60000));
     await api("/me/player/play"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT",body:JSON.stringify({uris:[cur.uri],position_ms:ms})});
-    started=true;playing=true;$("disc").classList.add("playing");hint("Läuft auf "+(dev?dev.name:"Spotify")+". Tippen für Pause");
-  }catch(e){playing=false;$("disc").classList.remove("playing");hint(errText(e),true)}
+    wantPlay=false;showWake(false);started=true;playing=true;$("disc").classList.add("playing");hint("Läuft auf "+(dev?dev.name:"Spotify")+". Tippen für Pause");
+  }catch(e){playing=false;$("disc").classList.remove("playing");
+    if(e.code===404||e.reason==="NO_ACTIVE_DEVICE"){wantPlay=true;showWake(true);hint("Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm dann hierher zurück.",true)}
+    else hint(errText(e),true)}
   $("disc").classList.remove("busy");
 }
 async function toggle(){
   if(pos<0)return next(true);
   if(!started)return playCurrent();
-  const dev=LS.get("dev");const qs=dev?"?device_id="+encodeURIComponent(dev.id):"";
+  let dev=LS.get("dev");
   try{
+    if(!playing)dev=await pickDevice()||dev;
+    const qs=dev?"?device_id="+encodeURIComponent(dev.id):"";
     if(playing){await api("/me/player/pause"+qs,{method:"PUT"});playing=false;$("disc").classList.remove("playing");hint("Pausiert. Tippen zum Weiterhören")}
     else{await api("/me/player/play"+qs,{method:"PUT"});playing=true;$("disc").classList.add("playing");hint("Läuft. Tippen für Pause")}
-  }catch(e){hint(errText(e),true)}
+  }catch(e){if(e.code===404){wantPlay=true;showWake(true);hint("Spotify schläft gerade. Tippe auf „Spotify aufwecken“ und komm dann hierher zurück.",true)}else hint(errText(e),true)}
 }
 async function next(autoplay){
   const wasPlaying=playing;playing=false;$("disc").classList.remove("playing");
@@ -290,6 +306,8 @@ $("gear").onclick=()=>{if(!LS.get("tok")){show("setup");return}show("settings");
 $("refreshDevs").onclick=loadDevices;
 $("closeSettings").onclick=()=>{LS.set("startAt",$("startAt").value);show("game")};
 $("logout").onclick=()=>{LS.del("tok");LS.del("dev");show("setup")};
+$("wake").onclick=()=>{location.href="spotify:"};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&wantPlay&&pos>=0){setTimeout(()=>{if(!started)playCurrent();else toggle()},800)}});
 $("disc").onclick=toggle;$("back").onclick=back;$("next").onclick=()=>next(false);$("reveal").onclick=reveal;
 boot();
 </script>

@@ -263,7 +263,7 @@ code{display:block;background:var(--ink);border:1px solid var(--line);border-rad
       </div>
       <div class="sec">
         <h3>Abspielgerät</h3>
-        <p class="small">Wird normalerweise automatisch gefunden. Hier kannst du es festlegen, zum Beispiel eine Box oder deinen PC.</p>
+        <p class="small">Standard ist „Automatisch“: Die Musik läuft immer auf dem Handy, nie von selbst auf Lautsprechern. Willst du eine Box oder den PC, wähle sie hier fest aus.</p>
         <div class="devs" id="devs"></div>
         <button class="btn wide" id="refreshDevs">Geräte aktualisieren</button>
       </div>
@@ -305,7 +305,8 @@ async function login(){
 }
 async function tokenReq(params){
   const r=await fetch("https://accounts.spotify.com/api/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams(params)});
-  const j=await r.json();if(!r.ok)throw new Error(j.error_description||j.error||"Anmeldung fehlgeschlagen");
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(j.error_description||j.error||"Anmeldung fehlgeschlagen");e.grant=j.error==="invalid_grant";throw e}
   LS.set("tok",{a:j.access_token,r:j.refresh_token||LS.get("tok",{}).r,exp:Date.now()+(j.expires_in-60)*1000});
 }
 async function handleRedirect(){
@@ -316,12 +317,23 @@ async function handleRedirect(){
   try{await tokenReq({grant_type:"authorization_code",code:q.get("code"),redirect_uri:REDIRECT,client_id:LS.get("cid"),code_verifier:LS.get("verifier")})}
   catch(e){$("setupErr").textContent=e.message}
 }
+/* Token erneuern: nur eine Erneuerung gleichzeitig (Spotify tauscht den Refresh-Token bei jeder Erneuerung aus) */
+let refreshing=null;
 async function token(){
   const t=LS.get("tok");if(!t)return null;
   if(Date.now()<t.exp)return t.a;
-  await tokenReq({grant_type:"refresh_token",refresh_token:t.r,client_id:LS.get("cid")});
-  return LS.get("tok").a;
+  if(!refreshing)refreshing=(async()=>{
+    try{await tokenReq({grant_type:"refresh_token",refresh_token:t.r,client_id:LS.get("cid")})}
+    catch(e){
+      if(e.grant){const now=LS.get("tok");if(now&&now.r===t.r){LS.del("tok");show("setup");$("setupErr").textContent="Die Spotify-Verbindung ist abgelaufen. Bitte einmal neu verbinden."}}
+      throw e;
+    }finally{refreshing=null}
+  })();
+  await refreshing;
+  return (LS.get("tok")||{}).a||null;
 }
+/* Beim Öffnen und alle 45 Minuten vorsorglich erneuern, damit die Verbindung warm bleibt */
+async function keepAlive(){const t=LS.get("tok");if(!t)return;if(t.exp-Date.now()<15*60*1000){const x=LS.get("tok");x.exp=0;LS.set("tok",x);try{await token()}catch(e){}}}
 async function api(path,opt={}){
   let tk=await token();if(!tk)throw {code:"auth"};
   const go=()=>fetch("https://api.spotify.com/v1"+path,{...opt,headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json",...(opt.headers||{})}});
@@ -337,15 +349,28 @@ async function api(path,opt={}){
 async function loadDevices(){
   const box=$("devs");box.innerHTML='<p class="small">Suche Geräte …</p>';
   try{
-    const j=await api("/me/player/devices");const sel=LS.get("dev");
-    if(!j||!j.devices.length){box.innerHTML='<p class="small">Kein Gerät gefunden. Spotify-App öffnen, dann aktualisieren.</p>';return}
+    const j=await api("/me/player/devices");const pin=LS.get("pin");const ds=(j&&j.devices)||[];
     box.innerHTML="";
-    j.devices.forEach(d=>{const b=document.createElement("button");b.className="dev"+(sel&&sel.id===d.id?" on":"");b.innerHTML=`<span>${esc(d.name)}</span><span class="small">${esc(d.type)}${d.is_active?" · aktiv":""}</span>`;b.onclick=()=>{LS.set("dev",{id:d.id,name:d.name});loadDevices()};box.appendChild(b)});
+    const auto=document.createElement("button");auto.className="dev"+(!pin?" on":"");
+    auto.innerHTML=`<span>Automatisch: dieses Handy</span><span class="small">empfohlen</span>`;
+    auto.onclick=()=>{LS.del("pin");loadDevices()};box.appendChild(auto);
+    const TYPES={Smartphone:"Handy",Computer:"PC",Speaker:"Lautsprecher",TV:"Fernseher",CastAudio:"Lautsprecher",CastVideo:"Fernseher",AVR:"Anlage",Tablet:"Tablet"};
+    ds.forEach(d=>{const on=pin&&(pin.id===d.id||pin.name===d.name);const b=document.createElement("button");b.className="dev"+(on?" on":"");
+      b.innerHTML=`<span>${esc(d.name)}</span><span class="small">${esc(TYPES[d.type]||d.type)}${d.is_active?" · aktiv":""}</span>`;
+      b.onclick=()=>{LS.set("pin",{id:d.id,name:d.name});loadDevices()};box.appendChild(b)});
+    if(!ds.length){const p=document.createElement("p");p.className="small";p.textContent="Gerade ist kein Gerät wach. Spotify-App öffnen, dann aktualisieren.";box.appendChild(p)}
   }catch(e){box.innerHTML=`<p class="small">Geräte konnten nicht geladen werden (${esc(e.msg||e.code)}).</p>`}
 }
 async function pickDevice(){
-  const saved=LS.get("dev");const j=await api("/me/player/devices");const ds=(j&&j.devices)||[];
-  const d=ds.find(x=>saved&&x.id===saved.id)||ds.find(x=>saved&&x.name===saved.name)||ds.find(x=>x.is_active)||(ds.length===1?ds[0]:null)||ds.find(x=>x.type==="Smartphone");
+  /* Fest gewähltes Gerät nur, wenn in den Einstellungen ausgewählt. Sonst immer ein Handy,
+     nie automatisch Lautsprecher oder Fernseher, auch wenn die bei Spotify gerade aktiv sind. */
+  const pin=LS.get("pin");const last=LS.get("dev");const j=await api("/me/player/devices");const ds=(j&&j.devices)||[];
+  let d=null;
+  if(pin)d=ds.find(x=>x.id===pin.id)||ds.find(x=>x.name===pin.name)||null;
+  else{
+    const phones=ds.filter(x=>x.type==="Smartphone"||x.type==="Tablet");
+    d=phones.find(x=>last&&x.name===last.name)||phones.find(x=>x.is_active)||(phones.length===1?phones[0]:null)||phones[0]||null;
+  }
   if(d)LS.set("dev",{id:d.id,name:d.name});
   return d||null;
 }
@@ -480,10 +505,12 @@ function syncSeg(){const v=LS.get("startAt","0");$("startSeg").querySelectorAll(
 function openSettings(){if(!LS.get("tok")){show("setup");return}$("settings").hidden=false;syncSeg();loadDevices()}
 function closeSettings(){$("settings").hidden=true}
 async function boot(){
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
   if(!LS.get("cid"))LS.set("cid",DEFAULT_CID);$("redir").textContent="Redirect-URI: "+REDIRECT;$("cid").value=LS.get("cid","");
   await handleRedirect();
   if(!LS.get("tok")){show("setup");return}
-  buildDeck();renderPlayers();show("game");
+  buildDeck();renderPlayers();show("game");keepAlive();setInterval(keepAlive,45*60*1000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")keepAlive()});
 }
 $("login").onclick=login;
 $("gear").onclick=openSettings;

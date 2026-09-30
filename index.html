@@ -47,6 +47,17 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding
 .dev{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font-weight:600;max-width:none;text-align:left}
 .dev.on{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
 [hidden]{display:none!important}
+.players{width:100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.pl{display:flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--panel);overflow:hidden;flex:0 0 auto;max-width:none;padding:0}
+.pl.turn{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.pl .nm{padding:9px 6px 9px 14px;font-weight:700;font-size:15px}
+.pl .sc{font-family:var(--display);color:var(--accent);padding:9px 12px 9px 4px;font-size:16px;font-variant-numeric:tabular-nums}
+.pl button{border:0;border-left:1px solid var(--line);border-radius:0;background:none;color:var(--fg);padding:9px 13px;font-size:17px;flex:0 0 auto;max-width:none;line-height:1}
+.addpl{border:1px dashed var(--line);background:none;color:var(--muted);border-radius:999px;padding:9px 14px;font-size:14px;flex:0 0 auto;max-width:none}
+.turninfo{color:var(--muted);font-size:14px;margin:-8px 0 0}
+.turninfo b{color:var(--fg)}
+.pledit{display:flex;gap:8px}
+.pledit button{flex:0 0 auto;max-width:none;padding:10px 14px}
 </style>
 </head>
 <body>
@@ -70,6 +81,11 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding
     <p class="small">Öffne die Spotify-App auf dem Gerät, auf dem die Musik laufen soll (Handy, Box, PC). Dann hier aktualisieren und antippen.</p>
     <div class="devs" id="devs"></div>
     <button id="refreshDevs">Geräte aktualisieren</button>
+    <h2>Spieler</h2>
+    <p class="small">Im Spiel: Name antippen gibt +1 Punkt, das − zieht einen ab.</p>
+    <div id="pllist" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="pledit"><input id="newpl" placeholder="Name" autocomplete="off"><button id="addplBtn">Hinzufügen</button></div>
+    <button id="resetScores">Punkte auf 0 setzen</button>
     <h2>Songliste</h2>
     <select id="deck">
       <option value="hitster">Hitster Deutschland (308 Songs)</option>
@@ -84,6 +100,8 @@ code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding
 
   <!-- Game -->
   <section id="game" hidden style="width:100%;display:flex;flex-direction:column;align-items:center;gap:20px">
+    <div class="players" id="players"></div>
+    <p class="turninfo" id="turninfo" hidden></p>
     <span class="count" id="count"></span>
     <button class="disc" id="disc" aria-label="Abspielen oder Pause"><span class="label" id="lbl">?</span></button>
     <p class="hint" id="hint">Tippe auf die Platte</p>
@@ -159,7 +177,7 @@ async function loadDevices(){
 }
 
 /* ---------- Spiel ---------- */
-let deck=[],pos=-1,cur=null,playing=false,revealed=false;
+let deck=[],pos=-1,cur=null,playing=false,revealed=false,started=false;
 function buildDeck(){
   const k=LS.get("deck","hitster");const list=k==="all"?[...DECKS.hitster,...DECKS.phil]:DECKS[k];
   deck=list.map(s=>s);for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}
@@ -196,24 +214,31 @@ async function playCurrent(){
     const dev=LS.get("dev");const st=LS.get("startAt","0");
     let ms=0;if(st==="30")ms=30000;else if(st==="rand"&&cur.dur)ms=Math.floor(Math.random()*Math.max(0,cur.dur-60000));
     await api("/me/player/play"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT",body:JSON.stringify({uris:[cur.uri],position_ms:ms})});
-    playing=true;$("disc").classList.add("playing");hint("Läuft auf "+(dev?dev.name:"Spotify")+". Tippen für Pause");
+    started=true;playing=true;$("disc").classList.add("playing");hint("Läuft auf "+(dev?dev.name:"Spotify")+". Tippen für Pause");
   }catch(e){playing=false;$("disc").classList.remove("playing");hint(errText(e),true)}
   $("disc").classList.remove("busy");
 }
 async function toggle(){
-  if(pos<0)return next();
-  if(!cur)return playCurrent();
+  if(pos<0)return next(true);
+  if(!started)return playCurrent();
   const dev=LS.get("dev");const qs=dev?"?device_id="+encodeURIComponent(dev.id):"";
   try{
     if(playing){await api("/me/player/pause"+qs,{method:"PUT"});playing=false;$("disc").classList.remove("playing");hint("Pausiert. Tippen zum Weiterhören")}
     else{await api("/me/player/play"+qs,{method:"PUT"});playing=true;$("disc").classList.add("playing");hint("Läuft. Tippen für Pause")}
   }catch(e){hint(errText(e),true)}
 }
-function next(){
-  if(pos>=deck.length-1){buildDeck();hint("Alle Songs durch, neu gemischt.")}
+async function next(autoplay){
+  const wasPlaying=playing;playing=false;$("disc").classList.remove("playing");
+  if(wasPlaying){const dev=LS.get("dev");try{await api("/me/player/pause"+(dev?"?device_id="+encodeURIComponent(dev.id):""),{method:"PUT"})}catch(e){}}
+  let msg="Tippe auf die Platte zum Abspielen";
+  if(pos>=deck.length-1){buildDeck();msg="Alle Songs durch, neu gemischt. Tippe auf die Platte"}
+  const first=pos<0;
   pos++;cur=null;revealed=false;$("result").innerHTML="";$("reveal").disabled=false;
+  if(!first&&players.length){turn=(turn+1)%players.length;savePl()}
+  renderPlayers();
   $("count").textContent=`Song ${pos+1} von ${deck.length}`;
-  playCurrent();
+  started=false;resolve(deck[pos]).catch(()=>{});
+  if(autoplay)playCurrent();else hint(msg);
 }
 function reveal(){
   if(pos<0||revealed)return;revealed=true;const s=deck[pos];
@@ -222,6 +247,34 @@ function reveal(){
   $("reveal").disabled=true;
 }
 
+/* ---------- Spieler ---------- */
+let players=LS.get("players",[]),turn=LS.get("turn",0);
+function savePl(){LS.set("players",players);LS.set("turn",turn)}
+function renderPlayers(){
+  const box=$("players");box.innerHTML="";
+  players.forEach((p,i)=>{
+    const d=document.createElement("div");d.className="pl"+(i===turn%players.length?" turn":"");
+    d.innerHTML=`<span class="nm">${esc(p.n)}</span><span class="sc">${p.s}</span>`;
+    d.onclick=()=>{p.s++;savePl();renderPlayers()};
+    const m=document.createElement("button");m.textContent="−";m.setAttribute("aria-label","Punkt abziehen "+p.n);
+    m.onclick=e=>{e.stopPropagation();if(p.s>0)p.s--;savePl();renderPlayers()};
+    d.appendChild(m);box.appendChild(d);
+  });
+  const a=document.createElement("button");a.className="addpl";a.textContent="+ Spieler";
+  a.onclick=()=>{const n=(window.prompt("Name des Spielers?")||"").trim();if(n){players.push({n,s:0});savePl();renderPlayers()}};
+  box.appendChild(a);
+  const ti=$("turninfo");
+  if(players.length>1){ti.hidden=false;ti.innerHTML="Dran: <b>"+esc(players[turn%players.length].n)+"</b>"}else ti.hidden=true;
+  const list=$("pllist");list.innerHTML="";
+  players.forEach((p,i)=>{const r=document.createElement("div");r.className="pledit";r.innerHTML=`<input value="${esc(p.n)}" aria-label="Name"><button aria-label="Entfernen">✕</button>`;
+    r.querySelector("input").onchange=e=>{p.n=e.target.value.trim()||p.n;savePl();renderPlayers()};
+    r.querySelector("button").onclick=()=>{players.splice(i,1);if(turn>=players.length)turn=0;savePl();renderPlayers()};list.appendChild(r)});
+  if(!players.length)list.innerHTML='<p class="small">Noch keine Spieler.</p>';
+}
+$("addplBtn").onclick=()=>{const n=$("newpl").value.trim();if(!n)return;players.push({n,s:0});$("newpl").value="";savePl();renderPlayers()};
+$("newpl").onkeydown=e=>{if(e.key==="Enter")$("addplBtn").click()};
+$("resetScores").onclick=()=>{players.forEach(p=>p.s=0);turn=0;savePl();renderPlayers()};
+
 /* ---------- Ansicht ---------- */
 function show(view){["setup","settings","game"].forEach(v=>$(v).hidden=v!==view);if(view==="game")$("game").style.display="flex"}
 async function boot(){
@@ -229,7 +282,7 @@ async function boot(){
   $("deck").value=LS.get("deck","hitster");$("startAt").value=LS.get("startAt","0");
   await handleRedirect();
   if(!LS.get("tok")){show("setup");return}
-  buildDeck();
+  buildDeck();renderPlayers();
   if(!LS.get("dev")){show("settings");loadDevices()}else show("game");
 }
 $("login").onclick=login;
@@ -237,7 +290,7 @@ $("gear").onclick=()=>{if(!LS.get("tok")){show("setup");return}show("settings");
 $("refreshDevs").onclick=loadDevices;
 $("closeSettings").onclick=()=>{const d=$("deck").value;if(d!==LS.get("deck","hitster")){LS.set("deck",d);buildDeck()}LS.set("startAt",$("startAt").value);show("game")};
 $("logout").onclick=()=>{LS.del("tok");LS.del("dev");show("setup")};
-$("disc").onclick=toggle;$("next").onclick=next;$("reveal").onclick=reveal;
+$("disc").onclick=toggle;$("next").onclick=()=>next(false);$("reveal").onclick=reveal;
 boot();
 </script>
 </body>
